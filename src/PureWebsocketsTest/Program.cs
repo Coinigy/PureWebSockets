@@ -1,16 +1,14 @@
-# PureWebSockets
-**A Cross Platform WebSocket Client for .NET Core NetStandard**
+﻿using System;
+using System.Net.WebSockets;
+using System.Threading;
+using PureWebsockets;
 
-**[NuGet Package](http://nuget.org/hjhjhj)**
-
-##### Requirements
-* .NET NetStandard V1.4+
-
-##### Usage
-* Example Included in project
-
-
+namespace CoreWebsocketsTest
+{
+    public class Program
+    {
         private static PureWebSocket _ws;
+
         public static void Main(string[] args)
         {
             _ws = new PureWebSocket("wss://echo.websocket.org", new ReconnectStrategy(10000, 60000));
@@ -63,5 +61,4 @@
             Console.WriteLine("");
         }
     }
-  
-  Provided by: 2017 Coinigy Inc. Coinigy.com
+}
