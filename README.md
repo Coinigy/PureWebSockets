@@ -1,7 +1,7 @@
 # PureWebSockets
 **A Cross Platform WebSocket Client for .NET Core NetStandard**
 
-**[NuGet Package](http://nuget.org/hjhjhj)**
+**[NuGet Package](https://www.nuget.org/packages/PureWebSockets)**
 
 ##### Requirements
 * .NET NetStandard V1.4+
