@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net.WebSockets;
 using System.Threading;
-using PureWebsockets;
+using PureWebSockets;
 
 namespace CoreWebsocketsTest
 {

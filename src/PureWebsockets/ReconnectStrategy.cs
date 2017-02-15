@@ -1,4 +1,4 @@
-﻿namespace PureWebsockets
+﻿namespace PureWebSockets
 {
     public class ReconnectStrategy
     {

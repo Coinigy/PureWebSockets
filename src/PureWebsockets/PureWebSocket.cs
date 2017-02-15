@@ -11,9 +11,8 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using PureWebSockets;
 
-namespace PureWebsockets
+namespace PureWebSockets
 {
     public class PureWebSocket : IDisposable
     {
