@@ -110,7 +110,7 @@ namespace PureWebSockets
                         if (State == WebSocketState.Open)
                             OnOpened?.Invoke();
 
-                        if (State == WebSocketState.Closed || State == WebSocketState.Aborted)
+                        if ((State == WebSocketState.Closed || State == WebSocketState.Aborted) && !_reconnecting)
                         {
                             if (lastState == WebSocketState.Open && !_disconnectCalled && _reconnectStrategy != null &&
                                 !_reconnectStrategy.AreAttemptsComplete())
@@ -170,6 +170,8 @@ namespace PureWebSockets
                     try
                     {
                         _ws = new ClientWebSocket();
+                        if (!_monitorRunning)
+                            StartMonitor();
                         connected = _ws.ConnectAsync(new Uri(Url), _tokenSource.Token).Wait(15000);
                     }
                     catch
@@ -190,7 +192,6 @@ namespace PureWebSockets
                 if (connected)
                 {
                     _reconnecting = false;
-                    OnStateChanged?.Invoke(WebSocketState.Open, WebSocketState.Connecting);
                     if (!_monitorRunning)
                         StartMonitor();
                     if (!_listenerRunning)
