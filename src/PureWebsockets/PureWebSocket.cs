@@ -19,7 +19,7 @@ namespace PureWebSockets
     {
         private string Url { get; }
         private ClientWebSocket _ws;
-        private readonly BlockingCollection<string> _sendQueue = new BlockingCollection<string>();
+        private readonly BlockingCollection<KeyValuePair<DateTime, string>> _sendQueue = new BlockingCollection<KeyValuePair<DateTime, string>>();
         private readonly ReconnectStrategy _reconnectStrategy;
         private bool _disconnectCalled;
         private bool _listenerRunning;
@@ -27,13 +27,12 @@ namespace PureWebSockets
         private bool _monitorRunning;
         private bool _reconnecting;
         private CancellationTokenSource _tokenSource = new CancellationTokenSource();
-
         private Task _monitorTask;
         private Task _listenerTask;
         private Task _senderTask;
 
-
         public WebSocketState State => _ws.State;
+        public TimeSpan SendCacheItemTimeout { get; set; }
 
         public event Data OnData;
         public event Message OnMessage;
@@ -48,7 +47,15 @@ namespace PureWebSockets
         {
             Url = url;
             _ws = new ClientWebSocket();
+            SendCacheItemTimeout = new TimeSpan(0, 1, 0, 0);
+            StartMonitor();
+        }
 
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout)
+        {
+            Url = url;
+            _ws = new ClientWebSocket();
+            SendCacheItemTimeout = sendCacheItemTimeout;
             StartMonitor();
         }
 
@@ -57,6 +64,15 @@ namespace PureWebSockets
             Url = url;
             _reconnectStrategy = reconnectStrategy;
             _ws = new ClientWebSocket();
+            StartMonitor();
+        }
+
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy)
+        {
+            Url = url;
+            _reconnectStrategy = reconnectStrategy;
+            _ws = new ClientWebSocket();
+            SendCacheItemTimeout = sendCacheItemTimeout;
             StartMonitor();
         }
 
@@ -91,7 +107,7 @@ namespace PureWebSockets
             {
                 if (State != WebSocketState.Open) return false;
 
-                _sendQueue.Add(data);
+                _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
                 return true;
             }
             catch (Exception ex)
@@ -307,7 +323,9 @@ namespace PureWebSockets
                         if (_ws.State == WebSocketState.Open && !_reconnecting)
                         {
                             var msg = _sendQueue.Take(_tokenSource.Token);
-                            var buffer = Encoding.UTF8.GetBytes(msg);
+                            if(msg.Key.Add(SendCacheItemTimeout) < DateTime.UtcNow)
+                                continue;
+                            var buffer = Encoding.UTF8.GetBytes(msg.Value);
                             try
                             {
                                 await _ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text,
@@ -316,7 +334,7 @@ namespace PureWebSockets
                             catch (Exception ex)
                             {
                                 // Most likely socket error
-                                OnSendFailed?.Invoke(msg, ex);
+                                OnSendFailed?.Invoke(msg.Value, ex);
                                 _ws.Abort();
                                 break;
                             }
