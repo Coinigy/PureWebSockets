@@ -68,6 +68,14 @@ namespace PureWebSockets
 
                 StartListener();
                 StartSender();
+
+                Task.Run(() =>
+                {
+                    while (_ws.State != WebSocketState.Open)
+                    {
+                        
+                    }
+                }).Wait(15000);
             }
             catch (Exception ex)
             {
