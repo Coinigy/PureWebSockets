@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -73,7 +74,7 @@ namespace PureWebSockets
                 {
                     while (_ws.State != WebSocketState.Open)
                     {
-                        
+
                     }
                 }).Wait(15000);
             }
@@ -111,7 +112,11 @@ namespace PureWebSockets
                     var lastState = State;
                     while (_ws != null && !_disposedValue)
                     {
-                        if (lastState == State) continue;
+                        if (lastState == State)
+                        {
+                            Thread.Sleep(200);
+                            continue;
+                        }
 
                         OnStateChanged?.Invoke(State, lastState);
 
@@ -134,8 +139,6 @@ namespace PureWebSockets
                         }
 
                         lastState = State;
-
-                        Task.Delay(20).Wait();
                     }
                 }
                 catch (Exception ex)
