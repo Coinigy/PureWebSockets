@@ -33,6 +33,8 @@ namespace PureWebSockets
 
         public WebSocketState State => _ws.State;
         public TimeSpan SendCacheItemTimeout { get; set; }
+        public ushort SendDelay { get; set; }
+        public int SendQueueLength => _sendQueue.Count;
 
         public event Data OnData;
         public event Message OnMessage;
@@ -48,6 +50,7 @@ namespace PureWebSockets
             Url = url;
             _ws = new ClientWebSocket();
             SendCacheItemTimeout = new TimeSpan(0, 1, 0, 0);
+            SendDelay = 80;
             StartMonitor();
         }
 
@@ -56,6 +59,7 @@ namespace PureWebSockets
             Url = url;
             _ws = new ClientWebSocket();
             SendCacheItemTimeout = sendCacheItemTimeout;
+            SendDelay = 80;
             StartMonitor();
         }
 
@@ -63,6 +67,8 @@ namespace PureWebSockets
         {
             Url = url;
             _reconnectStrategy = reconnectStrategy;
+            SendCacheItemTimeout = new TimeSpan(0, 1, 0, 0);
+            SendDelay = 80;
             _ws = new ClientWebSocket();
             StartMonitor();
         }
@@ -72,11 +78,12 @@ namespace PureWebSockets
             Url = url;
             _reconnectStrategy = reconnectStrategy;
             _ws = new ClientWebSocket();
+            SendDelay = 80;
             SendCacheItemTimeout = sendCacheItemTimeout;
             StartMonitor();
         }
 
-        public void Connect()
+        public bool Connect()
         {
             try
             {
@@ -93,6 +100,8 @@ namespace PureWebSockets
 
                     }
                 }).Wait(15000);
+
+                return _ws.State == WebSocketState.Open;
             }
             catch (Exception ex)
             {
@@ -106,8 +115,10 @@ namespace PureWebSockets
             try
             {
                 if (State != WebSocketState.Open) return false;
-
-                _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
+                Task.Run(() =>
+                {
+                    _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
+                }).Wait(100, _tokenSource.Token);
                 return true;
             }
             catch (Exception ex)
@@ -339,8 +350,8 @@ namespace PureWebSockets
                                 break;
                             }
                         }
-                        // limit to 80 ms per iteration
-                        Thread.Sleep(80);
+                        // limit to N ms per iteration
+                        Thread.Sleep(SendDelay);
                     }
                 }
                 catch (Exception ex)
