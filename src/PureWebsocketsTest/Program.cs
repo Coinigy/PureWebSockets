@@ -8,22 +8,24 @@ namespace CoreWebsocketsTest
     public class Program
     {
         private static PureWebSocket _ws;
-
+        private static int _sendCount = 0;
+        private static Timer _timer;
         public static void Main(string[] args)
         {
             _ws = new PureWebSocket("wss://echo.websocket.org", new ReconnectStrategy(10000, 60000));
             _ws.OnStateChanged += Ws_OnStateChanged;
             _ws.OnMessage += Ws_OnMessage;
             _ws.OnClosed += Ws_OnClosed;
-            _ws.OnSendFailed += _ws_OnSendFailed;
+            _ws.OnSendFailed += Ws_OnSendFailed;
+            _ws.SendDelay = 500;
             _ws.Connect();
 
-            var timer = new Timer(OnTick, null, 1000, 500);
+            _timer = new Timer(OnTick, null, 1000, 1);
 
             Console.ReadLine();
         }
 
-        private static void _ws_OnSendFailed(string data, Exception ex)
+        private static void Ws_OnSendFailed(string data, Exception ex)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"{DateTime.Now} Send Failed: {ex.Message}");
@@ -33,7 +35,23 @@ namespace CoreWebsocketsTest
 
         private static void OnTick(object state)
         {
-            _ws.Send(DateTime.Now.Ticks.ToString());
+            if (_sendCount == 1000)
+            {
+                _timer.Dispose();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"{DateTime.Now} Max Send Count Reached: {_sendCount}");
+                Console.ResetColor();
+                Console.WriteLine("");
+                return;
+            }
+            if (_ws.Send(DateTime.Now.Ticks.ToString()))
+            {
+                _sendCount++;
+            }
+            else
+            {
+                Ws_OnSendFailed("", new Exception("Send Returned False"));
+            }
         }
 
         private static void Ws_OnClosed(WebSocketCloseStatus reason)
