@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Net.WebSockets;
 using System.Threading;
 using PureWebSockets;
@@ -12,17 +13,20 @@ namespace CoreWebsocketsTest
         private static Timer _timer;
         public static void Main(string[] args)
         {
+            _timer = new Timer(OnTick, null, 2000, 1);
+
+            RESTART:
             _ws = new PureWebSocket("wss://echo.websocket.org", new ReconnectStrategy(10000, 60000));
+            _ws.SendDelay = 100;
             _ws.OnStateChanged += Ws_OnStateChanged;
             _ws.OnMessage += Ws_OnMessage;
             _ws.OnClosed += Ws_OnClosed;
             _ws.OnSendFailed += Ws_OnSendFailed;
-            _ws.SendDelay = 500;
             _ws.Connect();
-
-            _timer = new Timer(OnTick, null, 1000, 1);
-
+            
             Console.ReadLine();
+            _ws.Dispose(true);
+            goto RESTART;
         }
 
         private static void Ws_OnSendFailed(string data, Exception ex)
@@ -35,16 +39,18 @@ namespace CoreWebsocketsTest
 
         private static void OnTick(object state)
         {
+            if (_ws.State != WebSocketState.Open) return;
+
             if (_sendCount == 1000)
             {
-                _timer.Dispose();
+                _timer = new Timer(OnTick, null, 30000, 1);
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"{DateTime.Now} Max Send Count Reached: {_sendCount}");
                 Console.ResetColor();
                 Console.WriteLine("");
-                return;
+                _sendCount = 0;
             }
-            if (_ws.Send(DateTime.Now.Ticks.ToString()))
+            if (_ws.Send(_sendCount + " | " + DateTime.Now.Ticks.ToString()))
             {
                 _sendCount++;
             }
