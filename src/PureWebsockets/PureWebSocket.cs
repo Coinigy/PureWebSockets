@@ -381,15 +381,30 @@ namespace PureWebSockets
 
         private bool _disposedValue; // To detect redundant calls
 
-        protected virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing, bool waitForSendsToComplete)
         {
             if (!_disposedValue)
             {
                 if (disposing)
                 {
                     // dispose managed state (managed objects).
+                    if (_sendQueue.Count > 0 && _senderRunning)
+                    {
+                        var i = 0;
+                        while (_sendQueue.Count > 0 && _senderRunning)
+                        {
+                            i++;
+                            Task.Delay(1000).Wait();
+                            if(i > 25)
+                                break;
+                        }
+                    }
                     Disconnect();
+                    _tokenSource.Cancel();
+                    Thread.Sleep(500);
+                    _tokenSource.Dispose();
                     _ws.Dispose();
+                    GC.Collect();
                 }
 
                 _disposedValue = true;
@@ -401,6 +416,12 @@ namespace PureWebSockets
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
+        }
+
+        public void Dispose(bool waitForSendsToComplete)
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true, waitForSendsToComplete);
         }
 
         #endregion
