@@ -250,3 +250,5 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+src/PureWebSocketsTest/Properties/PublishProfiles/publish-module.psm1
+src/PureWebSocketsTest/Properties/PublishProfiles/local-publish.ps1
