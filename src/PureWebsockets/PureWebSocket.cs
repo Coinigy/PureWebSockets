@@ -7,7 +7,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -35,6 +34,7 @@ namespace PureWebSockets
         public TimeSpan SendCacheItemTimeout { get; set; }
         public ushort SendDelay { get; set; }
         public int SendQueueLength => _sendQueue.Count;
+        public int SendQueueLimit { get; set; }
 
         public event Data OnData;
         public event Message OnMessage;
@@ -45,17 +45,19 @@ namespace PureWebSockets
         public event SendFailed OnSendFailed;
         public event Fatality OnFatality;
 
-        public PureWebSocket(string url)
+        public PureWebSocket(string url, int queueLimit = 1000)
         {
+            SendQueueLimit = queueLimit;
             Url = url;
             _ws = new ClientWebSocket();
-            SendCacheItemTimeout = new TimeSpan(0, 1, 0, 0);
+            SendCacheItemTimeout = TimeSpan.FromMinutes(30);
             SendDelay = 80;
             StartMonitor();
         }
 
-        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout)
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, int queueLimit = 1000)
         {
+            SendQueueLimit = queueLimit;
             Url = url;
             _ws = new ClientWebSocket();
             SendCacheItemTimeout = sendCacheItemTimeout;
@@ -63,18 +65,20 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, ReconnectStrategy reconnectStrategy)
+        public PureWebSocket(string url, ReconnectStrategy reconnectStrategy, int queueLimit = 1000)
         {
+            SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
-            SendCacheItemTimeout = new TimeSpan(0, 1, 0, 0);
+            SendCacheItemTimeout = TimeSpan.FromMinutes(30);
             SendDelay = 80;
             _ws = new ClientWebSocket();
             StartMonitor();
         }
 
-        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy)
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy, int queueLimit = 1000)
         {
+            SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
             _ws = new ClientWebSocket();
@@ -114,7 +118,7 @@ namespace PureWebSockets
         {
             try
             {
-                if (State != WebSocketState.Open) return false;
+                if (State != WebSocketState.Open || SendQueueLength >= SendQueueLimit) return false;
                 Task.Run(() =>
                 {
                     _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
