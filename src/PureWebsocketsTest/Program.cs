@@ -17,6 +17,7 @@ namespace CoreWebsocketsTest
 
             RESTART:
             _ws = new PureWebSocket("wss://echo.websocket.org", new ReconnectStrategy(10000, 60000));
+            _ws.DebugMode = true;
             _ws.SendDelay = 100;
             _ws.OnStateChanged += Ws_OnStateChanged;
             _ws.OnMessage += Ws_OnMessage;
