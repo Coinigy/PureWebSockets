@@ -7,7 +7,7 @@
 * .NET NetStandard V1.4+
 
 ##### Usage
-* Example Included in project
+* Example included in project
 
 
         private static PureWebSocket _ws;
@@ -62,6 +62,5 @@
             Console.ResetColor();
             Console.WriteLine("");
         }
-    }
   
   Provided by: 2017 Coinigy Inc. Coinigy.com
