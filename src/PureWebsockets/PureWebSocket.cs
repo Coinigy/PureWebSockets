@@ -115,7 +115,10 @@ namespace PureWebSockets
         private void InitializeClient()
         {
             _ws = new ClientWebSocket();
-            _ws.Options.SetRequestHeader("X-Key", "thrthtr");
+
+            // optionally add request header e.g. X-Key, testapikey123
+            if (RequestHeader != null)
+                _ws.Options.SetRequestHeader(RequestHeader.Item1, RequestHeader.Item2);
         }
 
         public bool Connect()
