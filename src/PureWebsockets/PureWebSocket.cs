@@ -37,6 +37,7 @@ namespace PureWebSockets
         public int SendQueueLength => _sendQueue.Count;
         public int SendQueueLimit { get; set; }
         public bool DebugMode { get; set; }
+        public Tuple<string, string> RequestHeader { get; set; }
 
         public event Data OnData;
         public event Message OnMessage;
@@ -52,7 +53,8 @@ namespace PureWebSockets
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
-            _ws = new ClientWebSocket();
+            InitializeClient();
+
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
             SendDelay = 80;
             StartMonitor();
@@ -63,7 +65,8 @@ namespace PureWebSockets
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
-            _ws = new ClientWebSocket();
+            InitializeClient();
+
             SendCacheItemTimeout = sendCacheItemTimeout;
             SendDelay = 80;
             StartMonitor();
@@ -75,9 +78,10 @@ namespace PureWebSockets
             SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
+            InitializeClient();
+
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
             SendDelay = 80;
-            _ws = new ClientWebSocket();
             StartMonitor();
         }
 
@@ -87,10 +91,31 @@ namespace PureWebSockets
             SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
-            _ws = new ClientWebSocket();
-            SendDelay = 80;
+            InitializeClient();
+
             SendCacheItemTimeout = sendCacheItemTimeout;
+            SendDelay = 80;
             StartMonitor();
+        }
+
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy, Tuple<string, string> requestHeader, int queueLimit = 1000)
+        {
+            Log("Creating new instance.");
+            SendQueueLimit = queueLimit;
+            Url = url;
+            _reconnectStrategy = reconnectStrategy;
+            RequestHeader = requestHeader;
+            InitializeClient();
+
+            SendCacheItemTimeout = sendCacheItemTimeout;
+            SendDelay = 80;
+            StartMonitor();
+        }
+
+        private void InitializeClient()
+        {
+            _ws = new ClientWebSocket();
+            _ws.Options.SetRequestHeader("X-Key", "thrthtr");
         }
 
         public bool Connect()
@@ -234,7 +259,7 @@ namespace PureWebSockets
                     try
                     {
                         Log("Creating new websocket.");
-                        _ws = new ClientWebSocket();
+                        InitializeClient();
                         if (!_monitorRunning)
                         {
                             Log("Starting monitor.");
