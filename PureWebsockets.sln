@@ -1,18 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F2F2C64F-AC3F-40F9-9539-4DB4FB72310A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{79B10FF5-C6F4-4AA8-B1C4-43BFB4FFFD4A}"
-	ProjectSection(SolutionItems) = preProject
-		global.json = global.json
-	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "PureWebSocketsTest", "src\PureWebsocketsTest\PureWebSocketsTest.xproj", "{DB9C7CFC-C334-4687-A81F-73516258F7B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PureWebsocketsTest", "src\PureWebsocketsTest\PureWebsocketsTest.csproj", "{DB9C7CFC-C334-4687-A81F-73516258F7B1}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "PureWebSockets", "src\PureWebSockets\PureWebSockets.xproj", "{2E742D78-651E-41C4-9908-72E48874FF8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PureWebSockets", "src\PureWebSockets\PureWebSockets.csproj", "{2E742D78-651E-41C4-9908-72E48874FF8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
