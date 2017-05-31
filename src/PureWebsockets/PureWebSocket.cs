@@ -38,6 +38,7 @@ namespace PureWebSockets
         public int SendQueueLimit { get; set; }
         public bool DebugMode { get; set; }
         public Tuple<string, string> RequestHeader { get; set; }
+        public int DisconnectWait { get; set; }
 
         public event Data OnData;
         public event Message OnMessage;
@@ -58,6 +59,7 @@ namespace PureWebSockets
 
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
             SendDelay = 80;
+            DisconnectWait = 20000;
             StartMonitor();
         }
 
@@ -461,7 +463,7 @@ namespace PureWebSockets
             {
                 Log("Disconnect called, closing websocket.");
                 _disconnectCalled = true;
-                _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "NORMAL SHUTDOWN", _tokenSource.Token).Wait(20000);
+                _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "NORMAL SHUTDOWN", _tokenSource.Token).Wait(DisconnectWait);
             }
             catch (Exception ex)
             {
