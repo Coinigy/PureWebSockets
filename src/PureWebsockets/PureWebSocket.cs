@@ -48,11 +48,12 @@ namespace PureWebSockets
         public event SendFailed OnSendFailed;
         public event Fatality OnFatality;
 
-        public PureWebSocket(string url, int queueLimit = 1000)
+        public PureWebSocket(string url, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
+            RequestHeader = requestHeader;
             InitializeClient();
 
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
@@ -60,11 +61,12 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, int queueLimit = 1000)
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
+            RequestHeader = requestHeader;
             InitializeClient();
 
             SendCacheItemTimeout = sendCacheItemTimeout;
@@ -72,12 +74,13 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, ReconnectStrategy reconnectStrategy, int queueLimit = 1000)
+        public PureWebSocket(string url, ReconnectStrategy reconnectStrategy, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
+            RequestHeader = requestHeader;
             InitializeClient();
 
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
@@ -98,7 +101,7 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy, Tuple<string, string> requestHeader, int queueLimit = 1000)
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
