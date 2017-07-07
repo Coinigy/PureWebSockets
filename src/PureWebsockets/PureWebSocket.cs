@@ -526,7 +526,7 @@ namespace PureWebSockets
         internal void Log(string message, [CallerMemberName] string memberName = "")
         {
             if (DebugMode)
-                Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}");
+                Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
         }
     }
 }
