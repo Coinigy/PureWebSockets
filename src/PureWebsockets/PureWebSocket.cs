@@ -32,6 +32,12 @@ namespace PureWebSockets
         private Task _senderTask;
 
         public WebSocketState State => _ws.State;
+
+        public TimeSpan DefaultKeepAliveInterval
+        {
+            get => _ws.Options.KeepAliveInterval;
+            set => _ws.Options.KeepAliveInterval = value;
+        }
         public TimeSpan SendCacheItemTimeout { get; set; }
         public ushort SendDelay { get; set; }
         public int SendQueueLength => _sendQueue.Count;
@@ -120,6 +126,10 @@ namespace PureWebSockets
         private void InitializeClient()
         {
             _ws = new ClientWebSocket();
+
+            // this is a workaround for issues #24002 and #24055 in corefx. See https://github.com/dotnet/corefx/issues/24002 and https://github.com/dotnet/corefx/pull/24055
+            // this should not be needed in core version 2.1 and greater
+            DefaultKeepAliveInterval = Timeout.InfiniteTimeSpan;
 
             // optionally add request header e.g. X-Key, testapikey123
             if (RequestHeader != null)
