@@ -43,7 +43,7 @@ namespace PureWebSockets
         public int SendQueueLength => _sendQueue.Count;
         public int SendQueueLimit { get; set; }
         public bool DebugMode { get; set; }
-        public Tuple<string, string> RequestHeader { get; set; }
+        public Tuple<string, string>[] RequestHeaders { get; set; }
         public int DisconnectWait { get; set; }
 
         public event Data OnData;
@@ -55,12 +55,13 @@ namespace PureWebSockets
         public event SendFailed OnSendFailed;
         public event Fatality OnFatality;
 
-        public PureWebSocket(string url, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
+        public PureWebSocket(string url, IEnumerable<Tuple<string, string>> requestHeaders = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
-            RequestHeader = requestHeader;
+            if(requestHeaders != null)
+                RequestHeaders = requestHeaders.ToArray();
             InitializeClient();
 
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
@@ -69,12 +70,13 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, IEnumerable<Tuple<string, string>> requestHeaders = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
-            RequestHeader = requestHeader;
+            if (requestHeaders != null)
+                RequestHeaders = requestHeaders.ToArray();
             InitializeClient();
 
             SendCacheItemTimeout = sendCacheItemTimeout;
@@ -82,13 +84,14 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, ReconnectStrategy reconnectStrategy, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
+        public PureWebSocket(string url, ReconnectStrategy reconnectStrategy, IEnumerable<Tuple<string, string>> requestHeaders = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
-            RequestHeader = requestHeader;
+            if (requestHeaders != null)
+                RequestHeaders = requestHeaders.ToArray();
             InitializeClient();
 
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
@@ -109,13 +112,14 @@ namespace PureWebSockets
             StartMonitor();
         }
 
-        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy, Tuple<string, string> requestHeader = null, int queueLimit = 1000)
+        public PureWebSocket(string url, TimeSpan sendCacheItemTimeout, ReconnectStrategy reconnectStrategy, IEnumerable<Tuple<string, string>> requestHeaders = null, int queueLimit = 1000)
         {
             Log("Creating new instance.");
             SendQueueLimit = queueLimit;
             Url = url;
             _reconnectStrategy = reconnectStrategy;
-            RequestHeader = requestHeader;
+            if (requestHeaders != null)
+                RequestHeaders = requestHeaders.ToArray();
             InitializeClient();
 
             SendCacheItemTimeout = sendCacheItemTimeout;
@@ -132,8 +136,11 @@ namespace PureWebSockets
             DefaultKeepAliveInterval = Timeout.InfiniteTimeSpan;
 
             // optionally add request header e.g. X-Key, testapikey123
-            if (RequestHeader != null)
-                _ws.Options.SetRequestHeader(RequestHeader.Item1, RequestHeader.Item2);
+            if (RequestHeaders != null)
+                foreach (var h in RequestHeaders)
+                {
+                    _ws.Options.SetRequestHeader(h.Item1, h.Item2);
+                }
         }
 
         public bool Connect()
@@ -215,8 +222,7 @@ namespace PureWebSockets
 
                         if ((State == WebSocketState.Closed || State == WebSocketState.Aborted) && !_reconnecting)
                         {
-                            if (lastState == WebSocketState.Open && !_disconnectCalled && _reconnectStrategy != null &&
-                                !_reconnectStrategy.AreAttemptsComplete())
+                            if (lastState == WebSocketState.Open && !_disconnectCalled && _reconnectStrategy != null && !_reconnectStrategy.AreAttemptsComplete())
                             {
                                 Log("Reconnect needed.");
                                 // go through the reconnect strategy
@@ -439,8 +445,7 @@ namespace PureWebSockets
                             try
                             {
                                 Log($"Sending message: {msg.Key} {msg.Value}.");
-                                await _ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text,
-                                    true, _tokenSource.Token);
+                                await _ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, _tokenSource.Token);
                             }
                             catch (Exception ex)
                             {
