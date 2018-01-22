@@ -8,7 +8,17 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>2.0.2</Version>
+    <Version>2.0.2.1</Version>
+    <Description>A cross platform WebSocket client library for .NET NetStandard core.</Description>
+    <PackageReleaseNotes>See git for list of changes.</PackageReleaseNotes>
+    <PackageTags>websocket, netstandard, core, client, websockets</PackageTags>
+    <Copyright>Copyright 2018 Coinigy Inc.</Copyright>
+    <PackageProjectUrl>https://github.com/coinigy/PureWebSockets</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/coinigy/PureWebSockets</RepositoryUrl>
+    <Authors>ByronP</Authors>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/coinigy/PureWebSockets/master/LICENSE</PackageLicenseUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/coinigy/PureWebSockets/master/PWSIcon.png</PackageIconUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
