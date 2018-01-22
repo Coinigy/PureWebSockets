@@ -4,7 +4,7 @@
 **[NuGet Package](https://www.nuget.org/packages/PureWebSockets)**
 
 ##### Requirements
-* .NET NetStandard V1.4+
+* .NET NetStandard V2.0+
 
 ##### Usage
 * Example included in project
@@ -63,4 +63,4 @@
             Console.WriteLine("");
         }
   
-  Provided by: 2017 Coinigy Inc. Coinigy.com
+  Provided by: 2018 Coinigy Inc. Coinigy.com

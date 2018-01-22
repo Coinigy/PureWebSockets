@@ -1,6 +1,7 @@
 ﻿/*
  * Author: ByronP
  * Date: 1/14/2017
+ * Mod: 1/22/2018
  * Coinigy Inc. Coinigy.com
  */
 using System;
@@ -139,7 +140,8 @@ namespace PureWebSockets
             if (RequestHeaders != null)
                 foreach (var h in RequestHeaders)
                 {
-                    _ws.Options.SetRequestHeader(h.Item1, h.Item2);
+                    if(h.Item1 != "Host" && h.Item1 != "Connection" && h.Item1 != "User-Agent" && h.Item1 != "Content-Type" && h.Item1 != "Accept" && h.Item1 != "Referer")
+                        _ws.Options.SetRequestHeader(h.Item1, h.Item2);
                 }
         }
 
@@ -193,6 +195,29 @@ namespace PureWebSockets
                 Log($"Send threw exception: {ex.Message}.");
                 OnError?.Invoke(ex);
                 throw;
+            }
+        }
+
+        public bool Send(byte[] data, EncodingTypes encodingType = EncodingTypes.UTF8)
+        {
+            switch (encodingType)
+            {
+                case EncodingTypes.UTF7:
+                    return Send(Encoding.UTF7.GetString(data));
+                case EncodingTypes.UTF8:
+                    return Send(Encoding.UTF8.GetString(data));
+                case EncodingTypes.UTF32:
+                    return Send(Encoding.UTF32.GetString(data));
+                case EncodingTypes.ASCII:
+                    return Send(Encoding.ASCII.GetString(data));
+                case EncodingTypes.Unicode:
+                    return Send(Encoding.Unicode.GetString(data));
+                case EncodingTypes.BigEndianUnicode:
+                    return Send(Encoding.BigEndianUnicode.GetString(data));
+                case EncodingTypes.Default:
+                    return Send(Encoding.Default.GetString(data));
+                default:
+                    return Send(Encoding.Default.GetString(data));
             }
         }
 

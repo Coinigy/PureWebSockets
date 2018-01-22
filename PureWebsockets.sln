@@ -6,6 +6,10 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F2F2C64F-AC3F-40F9-9539-4DB4FB72310A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{79B10FF5-C6F4-4AA8-B1C4-43BFB4FFFD4A}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PureWebsocketsTest", "src\PureWebsocketsTest\PureWebsocketsTest.csproj", "{DB9C7CFC-C334-4687-A81F-73516258F7B1}"
 EndProject
@@ -32,5 +36,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{DB9C7CFC-C334-4687-A81F-73516258F7B1} = {F2F2C64F-AC3F-40F9-9539-4DB4FB72310A}
 		{2E742D78-651E-41C4-9908-72E48874FF8C} = {F2F2C64F-AC3F-40F9-9539-4DB4FB72310A}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7C8AC0C7-8E8F-4650-9D67-8C47C09A0DD1}
 	EndGlobalSection
 EndGlobal
