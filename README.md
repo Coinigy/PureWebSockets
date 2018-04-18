@@ -13,7 +13,14 @@
         private static PureWebSocket _ws;
         public static void Main(string[] args)
         {
-            _ws = new PureWebSocket("wss://echo.websocket.org", new ReconnectStrategy(10000, 60000));
+            var socketOptions = new PureWebSocketOptions()
+            {
+                DebugMode = true,
+                SendDelay = 100,
+            };
+
+			_ws = new PureWebSocket("wss://echo.websocket.org", socketOptions);
+
             _ws.OnStateChanged += Ws_OnStateChanged;
             _ws.OnMessage += Ws_OnMessage;
             _ws.OnClosed += Ws_OnClosed;
