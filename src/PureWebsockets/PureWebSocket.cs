@@ -1,7 +1,7 @@
 ﻿/*
  * Author: ByronP
  * Date: 1/14/2017
- * Mod: 4/17/2018
+ * Mod: 4/18/2018
  * Coinigy Inc. Coinigy.com
  */
 using System;
@@ -58,9 +58,9 @@ namespace PureWebSockets
         public event SendFailed OnSendFailed;
         public event Fatality OnFatality;
 
-        public PureWebSocket(string url, PureWebSocketOptions options)
+        public PureWebSocket(string url, IPureWebSocketOptions options)
         {
-            _options = options;
+            _options = (PureWebSocketOptions)options;
             Url = url;
 
             Log("Creating new instance.");
