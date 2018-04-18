@@ -15,9 +15,10 @@ namespace CoreWebsocketsTest
             _timer = new Timer(OnTick, null, 2000, 1);
 
             RESTART:
-            _ws = new PureWebSocket("wss://echo.websocket.org");
-            _ws.DebugMode = true;
-            _ws.SendDelay = 100;
+            var socketOptions = new PureWebSocketOptions();
+            socketOptions.DebugMode = true;
+            socketOptions.SendDelay = 100;
+            _ws = new PureWebSocket("wss://echo.websocket.org", socketOptions);
             _ws.OnStateChanged += Ws_OnStateChanged;
             _ws.OnMessage += Ws_OnMessage;
             _ws.OnClosed += Ws_OnClosed;
