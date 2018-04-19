@@ -17,7 +17,6 @@
     <RepositoryUrl>https://github.com/coinigy/PureWebSockets</RepositoryUrl>
     <Authors>ByronP</Authors>
     <Title>Pure WebSockets</Title>
-    <Tags>websocket, netstandard, core, client, websockets</Tags>
     <PackageLicenseUrl>https://raw.githubusercontent.com/coinigy/PureWebSockets/master/LICENSE</PackageLicenseUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/coinigy/PureWebSockets/master/PWSIcon.png</PackageIconUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
