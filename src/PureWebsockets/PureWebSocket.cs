@@ -371,16 +371,20 @@ namespace PureWebSockets
                         }
                         else
                         {
+
+                            var exactDataBuffer = new byte[res.Count];
+                            Array.Copy(buffer, 0, exactDataBuffer, 0, res.Count);
                             // handle binary data
                             if (!res.EndOfMessage)
                             {
-                                binary.AddRange(buffer.Where(b => b != '\0'));
+                                binary.AddRange(exactDataBuffer);
                                 goto READ;
                             }
 
-                            binary.AddRange(buffer.Where(b => b != '\0'));
-                            Log($"Binary fully received: {Encoding.UTF8.GetString(binary.ToArray())}");
-                            Task.Run(() => OnData?.Invoke(binary.ToArray())).Wait(50);
+                            binary.AddRange(exactDataBuffer);
+                            var binaryData = binary.ToArray();
+                            LogData("Binary fully received", binaryData);
+                            Task.Run(() => OnData?.Invoke(binaryData)).Wait(50);
                         }
 
                         // ReSharper disable once RedundantAssignment
@@ -518,6 +522,11 @@ namespace PureWebSockets
         {
             if (_options.DebugMode)
                 Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
+        }
+        internal void LogData(string message, byte[] data, [CallerMemberName] string memberName = "")
+        {
+            if (_options.DebugMode)
+                Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}, data: {BitConverter.ToString(data)}"));
         }
     }
 }
