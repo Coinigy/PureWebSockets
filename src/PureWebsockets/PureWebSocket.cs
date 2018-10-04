@@ -371,7 +371,6 @@ namespace PureWebSockets
                         }
                         else
                         {
-
                             var exactDataBuffer = new byte[res.Count];
                             Array.Copy(buffer, 0, exactDataBuffer, 0, res.Count);
                             // handle binary data
