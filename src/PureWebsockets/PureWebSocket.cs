@@ -1,14 +1,14 @@
 ﻿/*
  * Author: ByronP
  * Date: 1/14/2017
- * Mod: 4/18/2018
+ * Mod: 10/5/2018
  * Coinigy Inc. Coinigy.com
  */
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
+using System.Net;
 using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -21,7 +21,7 @@ namespace PureWebSockets
     {
         private string Url { get; }
         private ClientWebSocket _ws;
-        private PureWebSocketOptions _options;
+        private readonly PureWebSocketOptions _options;
         private readonly BlockingCollection<KeyValuePair<DateTime, string>> _sendQueue = new BlockingCollection<KeyValuePair<DateTime, string>>();
         private bool _disconnectCalled;
         private bool _listenerRunning;
@@ -74,12 +74,19 @@ namespace PureWebSockets
         {
             _ws = new ClientWebSocket();
 
+            try
+            {
+                if (_options.IgnoreCertErrors)
+                    ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+            }
+            catch (Exception ex)
+            {
+                Log($"Setting invalid certificate options threw an exception: {ex.Message}. Defaulting IgnoreCertErrors to false.");
+                _options.IgnoreCertErrors = false;
+            }
+
             if (_options.Proxy != null)
                 _ws.Options.Proxy = _options.Proxy;
-
-            // this is a workaround for issues #24002 and #24055 in corefx. See https://github.com/dotnet/corefx/issues/24002 and https://github.com/dotnet/corefx/pull/24055
-            // this should not be needed in core version 2.1 and greater
-            DefaultKeepAliveInterval = Timeout.InfiniteTimeSpan;
 
             // optionally add request header e.g. X-Key, testapikey123
             if (_options.Headers != null)
@@ -91,7 +98,7 @@ namespace PureWebSockets
                     }
                     catch(Exception ex)
                     {
-                        Log("Invalid or unsuported header, value: " + h + ", exception: " + ex.Message, nameof(_options.Headers));
+                        Log("Invalid or unsupported header, value: " + h + ", exception: " + ex.Message, nameof(_options.Headers));
                     }
                 }
         }
@@ -281,7 +288,7 @@ namespace PureWebSockets
                         {
                             Log("Reconnect strategy has reached max connection attempts, going to fatality.");
                             // exit everything as dead...
-                            OnFatality?.Invoke("Fatal network error. Max reconnect attemps reached.");
+                            OnFatality?.Invoke("Fatal network error. Max reconnect attempts reached.");
                             _reconnecting = false;
                             _disconnectCalled = true;
                             _tokenSource.Cancel();
@@ -360,9 +367,7 @@ namespace PureWebSockets
 
                             // support ping/pong if initiated by the server (see RFC 6455)
                             if (message.Trim() == "ping")
-#pragma warning disable 4014
-                                Send("pong");
-#pragma warning restore 4014
+                                _ = Send("pong");
                             else
                             {
                                 Log($"Message fully received: {message}");
