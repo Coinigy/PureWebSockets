@@ -8,7 +8,7 @@
         private readonly int _reconnectStepInterval;
 
         /*
-         * The inital maximum number of attempts to make.
+         * The initial maximum number of attempts to make.
         */
         private readonly int? _initMaxAttempts;
 
