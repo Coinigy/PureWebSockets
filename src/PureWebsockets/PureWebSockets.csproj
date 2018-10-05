@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>2.0.2</VersionPrefix>
+    <VersionPrefix>2.2.0</VersionPrefix>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>PureWebSockets</AssemblyName>
     <PackageId>PureWebSockets</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>2.1.1</Version>
+    <Version>2.2.0</Version>
     <Description>A cross platform WebSocket client library for .NET NetStandard core.</Description>
     <PackageReleaseNotes>See git for list of changes.</PackageReleaseNotes>
     <PackageTags>websocket, netstandard, core, client, websockets</PackageTags>
