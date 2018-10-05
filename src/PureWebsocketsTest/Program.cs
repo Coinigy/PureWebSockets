@@ -19,6 +19,7 @@ namespace CoreWebsocketsTest
             {
                 DebugMode = true,
                 SendDelay = 100,
+                IgnoreCertErrors = true
             };
 
             _ws = new PureWebSocket("wss://echo.websocket.org", socketOptions);
