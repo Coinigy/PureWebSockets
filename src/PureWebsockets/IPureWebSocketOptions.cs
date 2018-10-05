@@ -1,7 +1,7 @@
 ﻿/*
  * Author: ByronP
  * Date: 4/18/2018
- * Mod: 4/18/2018
+ * Mod: 10/05/2018
  * Coinigy Inc. Coinigy.com
  */
 using System;
@@ -49,6 +49,11 @@ namespace PureWebSockets
         /// If set to true verbose messages will be sent to std out.
         /// </summary>
         bool DebugMode { get; set; }
+
+        /// <summary>
+        /// If the servers certificate is invalid or has errors should we ignore it? true to ignore, false default.
+        /// </summary>
+        bool IgnoreCertErrors { get; set; }
 
         /// <summary>
         /// Amount time in ms to wait for a clean disconnect to complete (default 20000ms).
