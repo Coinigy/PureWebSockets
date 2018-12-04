@@ -19,6 +19,11 @@ namespace PureWebSockets
         IEnumerable<Tuple<string, string>> Headers { get; set; }
 
         /// <summary>
+        /// Supported protocols
+        /// </summary>
+        IEnumerable<string> SubProtocols { get; set; }
+
+        /// <summary>
         /// A proxy instance to use if required.
         /// </summary>
         IWebProxy Proxy { get; set; }

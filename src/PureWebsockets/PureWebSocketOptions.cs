@@ -17,7 +17,12 @@ namespace PureWebSockets
         /// Use with caution as some headers can cause issues/failures in the framework.
         /// </summary>
         public IEnumerable<Tuple<string, string>> Headers { get; set; }
-        
+
+        /// <summary>
+        /// Supported protocols
+        /// </summary>
+        public IEnumerable<string> SubProtocols { get; set; }
+
         /// <summary>
         /// A proxy instance to use if required.
         /// </summary>

@@ -88,6 +88,21 @@ namespace PureWebSockets
             if (_options.Proxy != null)
                 _ws.Options.Proxy = _options.Proxy;
 
+            if (_options.SubProtocols != null)
+            {
+                foreach(var protocol in _options.SubProtocols)
+                {
+                    try
+                    {
+                        _ws.Options.AddSubProtocol(protocol);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log("Invalid or unsupported sub protocol, value: " + protocol + ", exception: " + ex.Message, nameof(_options.SubProtocols));
+                    }
+                }
+            }
+
             // optionally add request header e.g. X-Key, testapikey123
             if (_options.Headers != null)
                 foreach (var h in _options.Headers)
