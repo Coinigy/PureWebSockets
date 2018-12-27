@@ -8,7 +8,7 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <Description>A cross platform WebSocket client library for .NET NetStandard core.</Description>
     <PackageReleaseNotes>See git for list of changes.</PackageReleaseNotes>
     <PackageTags>websocket, netstandard, core, client, websockets</PackageTags>
@@ -21,6 +21,8 @@
     <PackageIconUrl>https://raw.githubusercontent.com/coinigy/PureWebSockets/master/PWSIcon.png</PackageIconUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>7.2</LangVersion>
+    <SignAssembly>false</SignAssembly>
+    <DelaySign>false</DelaySign>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

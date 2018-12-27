@@ -19,7 +19,8 @@ namespace CoreWebsocketsTest
             {
                 DebugMode = true,
                 SendDelay = 100,
-                IgnoreCertErrors = true
+                IgnoreCertErrors = true,
+                MyReconnectStrategy = new ReconnectStrategy(2000, 4000, 20)
             };
 
             _ws = new PureWebSocket("wss://echo.websocket.org", socketOptions);
