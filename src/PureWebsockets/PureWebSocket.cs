@@ -43,6 +43,8 @@ namespace PureWebSockets
         /// </summary>
         public int SendQueueLength => _sendQueue.Count;
 
+        public CookieContainer Cookies;
+
         [EditorBrowsable(EditorBrowsableState.Never)]
         public TimeSpan DefaultKeepAliveInterval
         {
@@ -78,13 +80,17 @@ namespace PureWebSockets
             try
             {
                 if (_options.IgnoreCertErrors)
+                {
                     ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+                }
             }
             catch (Exception ex)
             {
                 Log($"Setting invalid certificate options threw an exception: {ex.Message}. Defaulting IgnoreCertErrors to false.");
                 _options.IgnoreCertErrors = false;
             }
+
+            Cookies = _ws.Options.Cookies;
 
             if (_options.Proxy != null)
                 _ws.Options.Proxy = _options.Proxy;
