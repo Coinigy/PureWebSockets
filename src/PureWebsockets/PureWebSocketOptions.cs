@@ -6,6 +6,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 
@@ -76,12 +77,18 @@ namespace PureWebSockets
         /// </summary>
         public int DisconnectWait { get; set; }
 
+        /// <summary>
+        /// The output for debug messages (default Console.Out).
+        /// </summary>
+        public TextWriter DebugOutput { get; set; }
+
         public PureWebSocketOptions()
         {
             SendQueueLimit = 10000;
             SendCacheItemTimeout = TimeSpan.FromMinutes(30);
             SendDelay = 80;
             DisconnectWait = 20000;
+            DebugOutput = Console.Out;
         }
     }
 }
