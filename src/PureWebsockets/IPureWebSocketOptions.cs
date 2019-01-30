@@ -1,12 +1,14 @@
 ﻿/*
  * Author: ByronP
  * Date: 4/18/2018
- * Mod: 10/05/2018
+ * Mod: 01/30/2019
  * Coinigy Inc. Coinigy.com
  */
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 
 namespace PureWebSockets
 {
@@ -61,8 +63,23 @@ namespace PureWebSockets
         bool IgnoreCertErrors { get; set; }
 
         /// <summary>
+        /// The cookies to use for this connection.
+        /// </summary>
+        CookieContainer Cookies { get; set; }
+
+        /// <summary>
+        /// Any certificates you wish to use for this connection.
+        /// </summary>
+        X509CertificateCollection ClientCertificates { get; set; }
+
+        /// <summary>
         /// Amount time in ms to wait for a clean disconnect to complete (default 20000ms).
         /// </summary>
         int DisconnectWait { get; set; }
+
+        /// <summary>
+        /// The output for debug messages (default Console.Out).
+        /// </summary>
+        TextWriter DebugOutput { get; set; }
     }
 }
