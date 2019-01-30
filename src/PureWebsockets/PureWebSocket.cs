@@ -43,8 +43,6 @@ namespace PureWebSockets
         /// </summary>
         public int SendQueueLength => _sendQueue.Count;
 
-        public CookieContainer Cookies;
-
         [EditorBrowsable(EditorBrowsableState.Never)]
         public TimeSpan DefaultKeepAliveInterval
         {
@@ -90,7 +88,11 @@ namespace PureWebSockets
                 _options.IgnoreCertErrors = false;
             }
 
-            Cookies = _ws.Options.Cookies;
+            if(_options.Cookies != null && _options.Cookies.Count > 0)
+                _ws.Options.Cookies = _options.Cookies;
+
+            if(_options.ClientCertificates != null && _options.ClientCertificates.Count > 0)
+                _ws.Options.ClientCertificates = _options.ClientCertificates;
 
             if (_options.Proxy != null)
                 _ws.Options.Proxy = _options.Proxy;

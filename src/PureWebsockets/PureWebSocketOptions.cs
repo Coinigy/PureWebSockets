@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 
 namespace PureWebSockets
 {
@@ -59,6 +60,16 @@ namespace PureWebSockets
         /// If the servers certificate is invalid or has errors should we ignore it? true to ignore, false default.
         /// </summary>
         public bool IgnoreCertErrors { get; set; }
+
+        /// <summary>
+        /// The cookies to use for this connection.
+        /// </summary>
+        public CookieContainer Cookies { get; set; }
+
+        /// <summary>
+        /// Any certificates you wish to use for this connection.
+        /// </summary>
+        public X509CertificateCollection ClientCertificates { get; set; }
 
         /// <summary>
         /// Amount time in ms to wait for a clean disconnect to complete (default 20000ms).
