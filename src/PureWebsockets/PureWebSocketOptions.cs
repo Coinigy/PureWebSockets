@@ -1,7 +1,7 @@
 ﻿/*
  * Author: ByronP
  * Date: 4/17/2018
- * Mod: 10/05/2018
+ * Mod: 01/30/2019
  * Coinigy Inc. Coinigy.com
  */
 using System;

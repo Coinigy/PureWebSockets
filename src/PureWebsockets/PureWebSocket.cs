@@ -1,7 +1,7 @@
 ﻿/*
  * Author: ByronP
  * Date: 1/14/2017
- * Mod: 10/5/2018
+ * Mod: 01/30/2019
  * Coinigy Inc. Coinigy.com
  */
 using System;
@@ -79,6 +79,7 @@ namespace PureWebSockets
             {
                 if (_options.IgnoreCertErrors)
                 {
+                    //NOTE: this will not work and a workaround will be available in netstandard 2.1
                     ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
                 }
             }
@@ -583,12 +584,12 @@ namespace PureWebSockets
         internal void Log(string message, [CallerMemberName] string memberName = "")
         {
             if (_options.DebugMode)
-                Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
+                Task.Run(() => _options.DebugOutput.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
         }
         internal void LogData(string message, byte[] data, [CallerMemberName] string memberName = "")
         {
             if (_options.DebugMode)
-                Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}, data: {BitConverter.ToString(data)}"));
+                Task.Run(() => _options.DebugOutput.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}, data: {BitConverter.ToString(data)}"));
         }
     }
 }
