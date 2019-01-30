@@ -23,7 +23,7 @@ namespace CoreWebsocketsTest
                 MyReconnectStrategy = new ReconnectStrategy(2000, 4000, 20)
             };
 
-            _ws = new PureWebSocket("wss://echo.websocket.org", socketOptions);
+            _ws = new PureWebSocket("wss://demos.kaazing.com/echo", socketOptions);
 
             _ws.OnStateChanged += Ws_OnStateChanged;
             _ws.OnMessage += Ws_OnMessage;
