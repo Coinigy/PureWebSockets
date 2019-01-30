@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Coinigy Inc.")]
 [assembly: AssemblyProduct("PureWebSockets")]
-[assembly: AssemblyTrademark("2017 - 2018 Coinigy Inc.")]
+[assembly: AssemblyTrademark("2017 - 2019 Coinigy Inc.")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
