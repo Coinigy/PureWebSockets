@@ -159,6 +159,39 @@ namespace PureWebSockets
             }
         }
 
+        public async Task<bool> ConnectAsync()
+        {
+            Log("Connect called.");
+            try
+            {
+                _disconnectCalled = false;
+                await _ws.ConnectAsync(new Uri(Url), _tokenSource.Token);
+                Log("Starting tasks.");
+                StartListener();
+                StartSender();
+
+                await Task.Run(async () =>
+                {
+                    var st = DateTime.UtcNow;
+
+                    while (_ws.State != WebSocketState.Open && (DateTime.UtcNow - st).TotalSeconds < 16)
+                    {
+                        await Task.Delay(1);
+                    }
+                });
+
+                Log($"Connect result: {_ws.State == WebSocketState.Open}, State {_ws.State}");
+
+                return _ws.State == WebSocketState.Open;
+            }
+            catch (Exception ex)
+            {
+                Log($"Connect threw exception: {ex.Message}.");
+                OnError?.Invoke(ex);
+                throw;
+            }
+        }
+
         public bool Send(string data)
         {
             try
@@ -174,6 +207,32 @@ namespace PureWebSockets
                     Log($"Adding item to send queue: Data {data}");
                     _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
                 }).Wait(100, _tokenSource.Token);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log($"Send threw exception: {ex.Message}.");
+                OnError?.Invoke(ex);
+                throw;
+            }
+        }
+
+        public async Task<bool> SendAsync(string data)
+        {
+            try
+            {
+                if ((State != WebSocketState.Open && !_reconnecting) || SendQueueLength >= _options.SendQueueLimit || _disconnectCalled)
+                {
+                    Log(SendQueueLength >= _options.SendQueueLimit ? $"Could not add item to send queue: queue limit reached, Data {data}" : $"Could not add item to send queue: State {State}, Queue Count {SendQueueLength}, Data {data}");
+                    return false;
+                }
+
+                await Task.Run(() =>
+                {
+                    Log($"Adding item to send queue: Data {data}");
+                    _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
+                });
 
                 return true;
             }
@@ -208,6 +267,29 @@ namespace PureWebSockets
             }
         }
 
+        public Task<bool> SendAsync(byte[] data, EncodingTypes encodingType = EncodingTypes.UTF8)
+        {
+            switch (encodingType)
+            {
+                case EncodingTypes.UTF7:
+                    return SendAsync(Encoding.UTF7.GetString(data));
+                case EncodingTypes.UTF8:
+                    return SendAsync(Encoding.UTF8.GetString(data));
+                case EncodingTypes.UTF32:
+                    return SendAsync(Encoding.UTF32.GetString(data));
+                case EncodingTypes.ASCII:
+                    return SendAsync(Encoding.ASCII.GetString(data));
+                case EncodingTypes.Unicode:
+                    return SendAsync(Encoding.Unicode.GetString(data));
+                case EncodingTypes.BigEndianUnicode:
+                    return SendAsync(Encoding.BigEndianUnicode.GetString(data));
+                case EncodingTypes.Default:
+                    return SendAsync(Encoding.Default.GetString(data));
+                default:
+                    return SendAsync(Encoding.Default.GetString(data));
+            }
+        }
+
         private void StartMonitor()
         {
             Log("Starting monitor.");
@@ -229,20 +311,23 @@ namespace PureWebSockets
                         if (_reconnecting)
                         {
                             // if we are reconnecting don't be so quick to fire off a state change
-                            await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval() + 1000);
-                            if(_reconnecting)
+                            if (_options.MyReconnectStrategy != null)
                             {
-                                await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval());
-                                // this gives us a max of 10 seconds to do a reconnect
-                                if (!_reconnecting)
+                                await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval() + 1000);
+                                if (_reconnecting)
+                                {
+                                    await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval());
+                                    // this gives us a max of 10 seconds to do a reconnect
+                                    if (!_reconnecting)
+                                        return;
+                                }
+                                else
+                                {
                                     return;
-                            }
-                            else
-                            {
-                                return;
+                                }
                             }
                         }
-                        // don't fire if we jusat came off of an abort (reconnect)
+                        // don't fire if we just came off of an abort (reconnect)
                         if (lastState == WebSocketState.Aborted && (State == WebSocketState.Connecting || State == WebSocketState.Open))
                             break;
                         if (_reconnectNeeded && State == WebSocketState.Aborted)
@@ -387,7 +472,7 @@ namespace PureWebSockets
                     READ:
 
                         var buffer = new byte[1024];
-                        WebSocketReceiveResult res = null;
+                        WebSocketReceiveResult res;
 
                         try
                         {
