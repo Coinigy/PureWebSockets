@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Net.WebSockets;
 using System.Threading;
+using System.Threading.Tasks;
 using PureWebSockets;
 
-namespace CoreWebsocketsTest
+namespace PureWebsocketsTest
 {
     public class Program
     {
         private static PureWebSocket _ws;
-        private static int _sendCount = 0;
+        private static int _sendCount;
         private static Timer _timer;
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            _timer = new Timer(OnTick, null, 2000, 1);
+            _timer = new Timer(OnTickAsync, null, 2000, 1);
 
             RESTART:
             var socketOptions = new PureWebSocketOptions()
@@ -29,7 +30,7 @@ namespace CoreWebsocketsTest
             _ws.OnMessage += Ws_OnMessage;
             _ws.OnClosed += Ws_OnClosed;
             _ws.OnSendFailed += Ws_OnSendFailed;
-            _ws.Connect();
+            await _ws.ConnectAsync();
             
             Console.ReadLine();
             _ws.Dispose(true);
@@ -44,20 +45,20 @@ namespace CoreWebsocketsTest
             Console.WriteLine("");
         }
 
-        private static void OnTick(object state)
+        private static async void OnTickAsync(object state)
         {
             if (_ws.State != WebSocketState.Open) return;
 
             if (_sendCount == 1000)
             {
-                _timer = new Timer(OnTick, null, 30000, 1);
+                _timer = new Timer(OnTickAsync, null, 30000, 1);
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"{DateTime.Now} Max Send Count Reached: {_sendCount}");
                 Console.ResetColor();
                 Console.WriteLine("");
                 _sendCount = 0;
             }
-            if (_ws.Send(_sendCount + " | " + DateTime.Now.Ticks.ToString()))
+            if (await _ws.SendAsync(_sendCount + " | " + DateTime.Now.Ticks.ToString()))
             {
                 _sendCount++;
             }
