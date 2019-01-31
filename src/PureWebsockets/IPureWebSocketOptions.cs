@@ -43,7 +43,7 @@ namespace PureWebSockets
 
         /// <summary>
         /// Minimum time between sending items from the queue in ms (default 80ms).
-        /// Setting this to lower then 10ms is not recomended.
+        /// Setting this to lower then 10ms is not recommended.
         /// </summary>
         ushort SendDelay { get; set; }
 
