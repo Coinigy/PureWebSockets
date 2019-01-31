@@ -9,4 +9,4 @@
 ##### Usage
 * Example included in project
   
-  Provided by: 2018 Coinigy Inc. Coinigy.com
+  Provided by: 2018 -2019 Coinigy Inc. Coinigy.com
