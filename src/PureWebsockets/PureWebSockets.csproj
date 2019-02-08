@@ -12,7 +12,7 @@
     <Description>A cross platform WebSocket client library for .NET NetStandard core.</Description>
     <PackageReleaseNotes>See git for list of changes.</PackageReleaseNotes>
     <PackageTags>websocket, netstandard, core, client, websockets</PackageTags>
-    <Copyright>Copyright 2018 -2019 Coinigy Inc.</Copyright>
+    <Copyright>Copyright 2018 -2019 Coinigy Inc, Coinigy.com</Copyright>
     <PackageProjectUrl>https://github.com/coinigy/PureWebSockets</PackageProjectUrl>
     <RepositoryUrl>https://github.com/coinigy/PureWebSockets</RepositoryUrl>
     <Authors>ByronP</Authors>
