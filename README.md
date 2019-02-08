@@ -3,6 +3,8 @@
 
 **[NuGet Package](https://www.nuget.org/packages/PureWebSockets)** [![PureWebSockets](https://img.shields.io/nuget/v/PureWebSockets.svg)](https://www.nuget.org/packages/PureWebSockets/) 
 
+[![Build Status](https://dev.azure.com/byronap/PuewWebSockets/_apis/build/status/Coinigy.PureWebSockets?branchName=master)](https://dev.azure.com/byronap/PuewWebSockets/_build/latest?definitionId=1&branchName=master)
+
 ##### Requirements
 * .NET NetStandard V2.0+
 
