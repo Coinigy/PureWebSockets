@@ -7,7 +7,7 @@ pool:
   vmImage: 'Ubuntu 16.04'
   
 variables:
-  projectPath: './src/PureWebsockets/PureWebSockets.csproj'
+  projectPath: './src/PureWebSockets/PureWebSockets.csproj'
   buildConfiguration: 'Release'
   framework: 'netcoreapp2.2'
 
