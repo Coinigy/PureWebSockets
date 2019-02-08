@@ -1,0 +1,17 @@
+name: $(Date:yyMMdd).$(Rev:r)
+
+trigger:
+- master
+
+pool:
+  vmImage: 'Ubuntu 16.04'
+  
+variables:
+  projectPath: './src/PureWebsockets/PureWebSockets.csproj'
+  buildConfiguration: 'Release'
+  framework: 'netcoreapp2.2'
+
+steps: 
+- script: |
+    dotnet build $(projectPath) --configuration $(buildConfiguration)
+    dotnet publish  $(projectPath) --configuration $(buildConfiguration) --output $BUILD_ARTIFACTSTAGINGDIRECTORY
