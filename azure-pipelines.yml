@@ -1,28 +1,16 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+name: $(Date:yyMMdd).$(Rev:r)
 
 trigger:
 - master
 
 pool:
-  vmImage: 'Ubuntu-16.04'
-
+  vmImage: 'Ubuntu 16.04'
+  
 variables:
   buildConfiguration: 'Release'
 
-steps:
-# Restore NuGet packages.
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'restore'
-    projects: 'src/PureWebsockets/PureWebSockets.csproj'
-    verbosityRestore: 'detailed'
-
-# Build the library.
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: 'src/PureWebsockets/PureWebSockets.csproj'
-    configuration: 'Release'
+steps: 
+- script: |
+    dotnet build --configuration $(buildConfiguration)
+    dotnet test dotnetcore-tests --configuration $(buildConfiguration) --logger trx
+    dotnet publish --configuration $(buildConfiguration) --output $BUILD_ARTIFACTSTAGINGDIRECTORY
