@@ -23,6 +23,7 @@ namespace PureWebSockets
         private ClientWebSocket _ws;
         private readonly PureWebSocketOptions _options;
         private readonly BlockingCollection<KeyValuePair<DateTime, string>> _sendQueue = new BlockingCollection<KeyValuePair<DateTime, string>>();
+        private readonly bool _autoReconnect = false;
         private bool _disconnectCalled;
         private bool _listenerRunning;
         private bool _senderRunning;
@@ -63,6 +64,11 @@ namespace PureWebSockets
         {
             _options = (PureWebSocketOptions)options;
             Url = url;
+
+            _autoReconnect = _options.MyReconnectStrategy != null 
+                && !_options.MyReconnectStrategy.AreAttemptsComplete() 
+                && _options.MyReconnectStrategy.GetReconnectInterval() > 0 
+                && _options.MyReconnectStrategy.GetReconnectInterval() != int.MaxValue;
 
             Log("Creating new instance.");
 
@@ -317,7 +323,7 @@ namespace PureWebSockets
                                 if (_reconnecting)
                                 {
                                     await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval());
-                                    // this gives us a max of 10 seconds to do a reconnect
+                                    // this gives us a max of N seconds to do a reconnect
                                     if (!_reconnecting)
                                         return;
                                 }
@@ -330,7 +336,7 @@ namespace PureWebSockets
                         // don't fire if we just came off of an abort (reconnect)
                         if (lastState == WebSocketState.Aborted && (State == WebSocketState.Connecting || State == WebSocketState.Open))
                             break;
-                        if (_reconnectNeeded && State == WebSocketState.Aborted)
+                        if (_autoReconnect && _reconnectNeeded && State == WebSocketState.Aborted)
                             break;
 
                         // check again since this can change before the first check
@@ -340,6 +346,9 @@ namespace PureWebSockets
                             continue;
                         }
 
+                        if(_autoReconnect && !_options.MyReconnectStrategy.AreAttemptsComplete() && (State == WebSocketState.Closed || State == WebSocketState.Aborted))
+                            break;
+
                         Log($"State changed from {lastState} to {State}.");
                         OnStateChanged?.Invoke(State, lastState);
 
@@ -348,7 +357,7 @@ namespace PureWebSockets
 
                         if ((State == WebSocketState.Closed || State == WebSocketState.Aborted) && !_reconnecting)
                         {
-                            if (lastState == WebSocketState.Open && !_disconnectCalled && _options.MyReconnectStrategy != null && !_options.MyReconnectStrategy.AreAttemptsComplete())
+                            if (lastState == WebSocketState.Open && !_disconnectCalled && _autoReconnect && _options.MyReconnectStrategy != null && !_options.MyReconnectStrategy.AreAttemptsComplete())
                             {
                                 Log("Reconnect needed.");
                                 // go through the reconnect strategy
@@ -371,13 +380,13 @@ namespace PureWebSockets
                 }
                 _monitorRunning = false;
                 Log("Exiting monitor.");
-                if (_reconnectNeeded && !_reconnecting && !_disconnectCalled)
+                if (_autoReconnect && _reconnectNeeded && !_reconnecting && !_disconnectCalled)
                     DoReconnect();                
             });
         }
 
         private void DoReconnect()
-        {
+        {            
             Log("Entered reconnect.");
             _ = Task.Run(async () =>
              {
