@@ -85,8 +85,7 @@ namespace PureWebSockets
             {
                 if (_options.IgnoreCertErrors)
                 {
-                    //NOTE: this will not work and a workaround will be available in netstandard 2.1
-                    ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+                    _ws.Options.RemoteCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
                 }
             }
             catch (Exception ex)
