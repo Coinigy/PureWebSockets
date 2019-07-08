@@ -197,8 +197,8 @@ namespace PureWebSockets
             try
             {
                 _disconnectCalled = false;
-                await _ws.ConnectAsync(new Uri(Url), _tokenSource.Token).ConfigureAwait(false); ;
-                await _logger.LogAsync("Starting tasks.").ConfigureAwait(false); ;
+                await _ws.ConnectAsync(new Uri(Url), _tokenSource.Token).ConfigureAwait(false);
+                await _logger.LogAsync("Starting tasks.").ConfigureAwait(false);
                 StartListener();
                 StartSender();
 
