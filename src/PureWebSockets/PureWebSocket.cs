@@ -710,15 +710,19 @@ namespace PureWebSockets
         internal void Log(string message, [CallerMemberName] string memberName = "")
         {
             if (_options.DebugMode)
+            {
                 Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
+            }
         }
 
         internal void LogData(string message, byte[] data, [CallerMemberName] string memberName = "")
         {
             if (_options.DebugMode)
+            {
                 Task.Run(() =>
                     _options.DebugOutput.WriteLine(
                         $"{DateTime.Now:O} PureWebSocket.{memberName}: {message}, data: {BitConverter.ToString(data)}"));
+            }
         }
 
         #region IDisposable Support
