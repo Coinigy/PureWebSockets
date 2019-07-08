@@ -34,6 +34,11 @@ namespace PureWebSockets
         private Task _monitorTask;
         private Task _listenerTask;
         private Task _senderTask;
+        
+        /// <summary>
+        /// The Client Web Socket Instance
+        /// </summary>
+        public ClientWebSocket Ws { get => _ws; }        
 
         /// <summary>
         /// The current state of the connection.
