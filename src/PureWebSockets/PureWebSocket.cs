@@ -4,6 +4,7 @@
  * Mod: 01/30/2019
  * Coinigy Inc. Coinigy.com
  */
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -19,28 +20,50 @@ namespace PureWebSockets
 {
     public class PureWebSocket : IDisposable
     {
-        private string Url { get; }
-        private ClientWebSocket _ws;
-        private readonly PureWebSocketOptions _options;
-        private readonly BlockingCollection<KeyValuePair<DateTime, string>> _sendQueue = new BlockingCollection<KeyValuePair<DateTime, string>>();
         private readonly bool _autoReconnect;
+        private readonly PureWebSocketOptions _options;
+
+        private readonly BlockingCollection<KeyValuePair<DateTime, string>> _sendQueue =
+            new BlockingCollection<KeyValuePair<DateTime, string>>();
+
         private bool _disconnectCalled;
         private bool _listenerRunning;
-        private bool _senderRunning;
+        private Task _listenerTask;
         private bool _monitorRunning;
+        private Task _monitorTask;
         private bool _reconnecting;
         private bool _reconnectNeeded;
-        private CancellationTokenSource _tokenSource = new CancellationTokenSource();
-        private Task _monitorTask;
-        private Task _listenerTask;
+        private bool _senderRunning;
         private Task _senderTask;
+        private CancellationTokenSource _tokenSource = new CancellationTokenSource();
+        private ClientWebSocket _ws;
+
+        public PureWebSocket(string url, IPureWebSocketOptions options)
+        {
+            _options = (PureWebSocketOptions)options;
+            Url = url;
+
+            _autoReconnect = _options.MyReconnectStrategy != null
+                             && !_options.MyReconnectStrategy.AreAttemptsComplete()
+                             && _options.MyReconnectStrategy.GetReconnectInterval() > 0
+                             && _options.MyReconnectStrategy.GetReconnectInterval() != int.MaxValue;
+
+            Log("Creating new instance.");
+
+            InitializeClient();
+
+            StartMonitor();
+        }
+
+        private string Url { get; }
 
         /// <summary>
-        /// The current state of the connection.
+        ///     The current state of the connection.
         /// </summary>
         public WebSocketState State => _ws.State;
+
         /// <summary>
-        /// The current number of items waiting to be sent.
+        ///     The current number of items waiting to be sent.
         /// </summary>
         public int SendQueueLength => _sendQueue.Count;
 
@@ -60,23 +83,6 @@ namespace PureWebSockets
         public event SendFailed OnSendFailed;
         public event Fatality OnFatality;
 
-        public PureWebSocket(string url, IPureWebSocketOptions options)
-        {
-            _options = (PureWebSocketOptions)options;
-            Url = url;
-
-            _autoReconnect = _options.MyReconnectStrategy != null
-                && !_options.MyReconnectStrategy.AreAttemptsComplete()
-                && _options.MyReconnectStrategy.GetReconnectInterval() > 0
-                && _options.MyReconnectStrategy.GetReconnectInterval() != int.MaxValue;
-
-            Log("Creating new instance.");
-
-            InitializeClient();
-
-            StartMonitor();
-        }
-
         private void InitializeClient()
         {
             _ws = new ClientWebSocket();
@@ -84,21 +90,18 @@ namespace PureWebSockets
             try
             {
                 if (_options.IgnoreCertErrors)
-                {
                     //NOTE: this will not work and a workaround will be available in netstandard 2.1
-                    ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => true;
-                }
+                    ServicePointManager.ServerCertificateValidationCallback +=
+                        (sender, certificate, chain, errors) => true;
             }
             catch (Exception ex)
             {
-                Log($"Setting invalid certificate options threw an exception: {ex.Message}. Defaulting IgnoreCertErrors to false.");
+                Log(
+                    $"Setting invalid certificate options threw an exception: {ex.Message}. Defaulting IgnoreCertErrors to false.");
                 _options.IgnoreCertErrors = false;
             }
 
-            if (_options.Cookies != null && _options.Cookies.Count > 0)
-            {
-                _ws.Options.Cookies = _options.Cookies;
-            }
+            if (_options.Cookies != null && _options.Cookies.Count > 0) _ws.Options.Cookies = _options.Cookies;
 
             if (_options.ClientCertificates != null && _options.ClientCertificates.Count > 0)
                 _ws.Options.ClientCertificates = _options.ClientCertificates;
@@ -107,33 +110,29 @@ namespace PureWebSockets
                 _ws.Options.Proxy = _options.Proxy;
 
             if (_options.SubProtocols != null)
-            {
                 foreach (var protocol in _options.SubProtocols)
-                {
                     try
                     {
                         _ws.Options.AddSubProtocol(protocol);
                     }
                     catch (Exception ex)
                     {
-                        Log("Invalid or unsupported sub protocol, value: " + protocol + ", exception: " + ex.Message, nameof(_options.SubProtocols));
+                        Log("Invalid or unsupported sub protocol, value: " + protocol + ", exception: " + ex.Message,
+                            nameof(_options.SubProtocols));
                     }
-                }
-            }
 
             // optionally add request header e.g. X-Key, testapikey123
             if (_options.Headers != null)
                 foreach (var h in _options.Headers)
-                {
                     try
                     {
                         _ws.Options.SetRequestHeader(h.Item1, h.Item2);
                     }
                     catch (Exception ex)
                     {
-                        Log("Invalid or unsupported header, value: " + h + ", exception: " + ex.Message, nameof(_options.Headers));
+                        Log("Invalid or unsupported header, value: " + h + ", exception: " + ex.Message,
+                            nameof(_options.Headers));
                     }
-                }
         }
 
         public bool Connect()
@@ -149,10 +148,7 @@ namespace PureWebSockets
 
                 Task.Run(async () =>
                 {
-                    while (_ws.State != WebSocketState.Open)
-                    {
-                        await Task.Delay(1);
-                    }
+                    while (_ws.State != WebSocketState.Open) await Task.Delay(1);
                 }).Wait(15000);
 
                 Log($"Connect result: {_ws.State == WebSocketState.Open}, State {_ws.State}");
@@ -183,9 +179,7 @@ namespace PureWebSockets
                     var st = DateTime.UtcNow;
 
                     while (_ws.State != WebSocketState.Open && (DateTime.UtcNow - st).TotalSeconds < 16)
-                    {
                         await Task.Delay(1).ConfigureAwait(false);
-                    }
                 });
 
                 Log($"Connect result: {_ws.State == WebSocketState.Open}, State {_ws.State}");
@@ -204,9 +198,12 @@ namespace PureWebSockets
         {
             try
             {
-                if ((State != WebSocketState.Open && !_reconnecting) || SendQueueLength >= _options.SendQueueLimit || _disconnectCalled)
+                if (State != WebSocketState.Open && !_reconnecting || SendQueueLength >= _options.SendQueueLimit ||
+                    _disconnectCalled)
                 {
-                    Log(SendQueueLength >= _options.SendQueueLimit ? $"Could not add item to send queue: queue limit reached, Data {data}" : $"Could not add item to send queue: State {State}, Queue Count {SendQueueLength}, Data {data}");
+                    Log(SendQueueLength >= _options.SendQueueLimit
+                        ? $"Could not add item to send queue: queue limit reached, Data {data}"
+                        : $"Could not add item to send queue: State {State}, Queue Count {SendQueueLength}, Data {data}");
                     return false;
                 }
 
@@ -230,9 +227,12 @@ namespace PureWebSockets
         {
             try
             {
-                if ((State != WebSocketState.Open && !_reconnecting) || SendQueueLength >= _options.SendQueueLimit || _disconnectCalled)
+                if (State != WebSocketState.Open && !_reconnecting || SendQueueLength >= _options.SendQueueLimit ||
+                    _disconnectCalled)
                 {
-                    Log(SendQueueLength >= _options.SendQueueLimit ? $"Could not add item to send queue: queue limit reached, Data {data}" : $"Could not add item to send queue: State {State}, Queue Count {SendQueueLength}, Data {data}");
+                    Log(SendQueueLength >= _options.SendQueueLimit
+                        ? $"Could not add item to send queue: queue limit reached, Data {data}"
+                        : $"Could not add item to send queue: State {State}, Queue Count {SendQueueLength}, Data {data}");
                     return false;
                 }
 
@@ -252,7 +252,10 @@ namespace PureWebSockets
             }
         }
 
-        public bool Send(byte[] data) => Send(data, EncodingTypes.UTF8);
+        public bool Send(byte[] data)
+        {
+            return Send(data, EncodingTypes.UTF8);
+        }
 
         public bool Send(byte[] data, EncodingTypes encodingType)
         {
@@ -277,7 +280,10 @@ namespace PureWebSockets
             }
         }
 
-        public Task<bool> SendAsync(byte[] data) => SendAsync(data, EncodingTypes.UTF8);
+        public Task<bool> SendAsync(byte[] data)
+        {
+            return SendAsync(data, EncodingTypes.UTF8);
+        }
 
         public Task<bool> SendAsync(byte[] data, EncodingTypes encodingType)
         {
@@ -320,12 +326,13 @@ namespace PureWebSockets
                             await Task.Delay(200);
                             continue;
                         }
+
                         if (_reconnecting)
-                        {
                             // if we are reconnecting don't be so quick to fire off a state change
                             if (_options.MyReconnectStrategy != null)
                             {
-                                await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval() + 1000).ConfigureAwait(false);
+                                await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval() + 1000)
+                                    .ConfigureAwait(false);
                                 if (_reconnecting)
                                 {
                                     await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval());
@@ -338,18 +345,13 @@ namespace PureWebSockets
                                     return;
                                 }
                             }
-                        }
+
                         // don't fire if we just came off of an abort (reconnect)
                         if (lastState == WebSocketState.Aborted &&
                             (State == WebSocketState.Connecting || State == WebSocketState.Open))
-                        {
                             break;
-                        }
 
-                        if (_autoReconnect && _reconnectNeeded && State == WebSocketState.Aborted)
-                        {
-                            break;
-                        }
+                        if (_autoReconnect && _reconnectNeeded && State == WebSocketState.Aborted) break;
 
                         // check again since this can change before the first check
                         if (lastState == State)
@@ -360,21 +362,18 @@ namespace PureWebSockets
 
                         if (_autoReconnect && !_options.MyReconnectStrategy.AreAttemptsComplete() &&
                             (State == WebSocketState.Closed || State == WebSocketState.Aborted))
-                        {
                             break;
-                        }
 
                         Log($"State changed from {lastState} to {State}.");
                         OnStateChanged?.Invoke(State, lastState);
 
-                        if (State == WebSocketState.Open)
-                        {
-                            OnOpened?.Invoke();
-                        }
+                        if (State == WebSocketState.Open) OnOpened?.Invoke();
 
                         if ((State == WebSocketState.Closed || State == WebSocketState.Aborted) && !_reconnecting)
                         {
-                            if (lastState == WebSocketState.Open && !_disconnectCalled && _autoReconnect && _options.MyReconnectStrategy != null && !_options.MyReconnectStrategy.AreAttemptsComplete())
+                            if (lastState == WebSocketState.Open && !_disconnectCalled && _autoReconnect &&
+                                _options.MyReconnectStrategy != null &&
+                                !_options.MyReconnectStrategy.AreAttemptsComplete())
                             {
                                 Log("Reconnect needed.");
                                 // go through the reconnect strategy
@@ -382,11 +381,10 @@ namespace PureWebSockets
                                 _reconnectNeeded = true;
                                 break;
                             }
+
                             OnClosed?.Invoke(_ws.CloseStatus ?? WebSocketCloseStatus.Empty);
                             if (_ws.CloseStatus != null && _ws.CloseStatus != WebSocketCloseStatus.NormalClosure)
-                            {
                                 OnError?.Invoke(new Exception(_ws.CloseStatus + " " + _ws.CloseStatusDescription));
-                            }
                         }
 
                         lastState = State;
@@ -400,10 +398,7 @@ namespace PureWebSockets
 
                 _monitorRunning = false;
                 Log("Exiting monitor.");
-                if (_autoReconnect && _reconnectNeeded && !_reconnecting && !_disconnectCalled)
-                {
-                    DoReconnect();
-                }
+                if (_autoReconnect && _reconnectNeeded && !_reconnecting && !_disconnectCalled) DoReconnect();
             });
         }
 
@@ -411,91 +406,81 @@ namespace PureWebSockets
         {
             Log("Entered reconnect.");
             _ = Task.Run(async () =>
-             {
-                 _tokenSource.Cancel();
-                 _reconnecting = true;
+            {
+                _tokenSource.Cancel();
+                _reconnecting = true;
 
-                 if (!Task.WaitAll(new[] { _monitorTask, _listenerTask, _senderTask }, 15000))
-                 {
-                     Log("Reconnect fatality, tasks failed to stop before the timeout.");
-                     // exit everything as dead...
-                     OnFatality?.Invoke("Fatal network error. Network services fail to shut down.");
-                     _reconnecting = false;
-                     _disconnectCalled = true;
-                     _tokenSource.Cancel();
-                     return;
-                 }
-                 Log("Disposing of current websocket.");
-                 _ws.Dispose();
+                if (!Task.WaitAll(new[] { _monitorTask, _listenerTask, _senderTask }, 15000))
+                {
+                    Log("Reconnect fatality, tasks failed to stop before the timeout.");
+                    // exit everything as dead...
+                    OnFatality?.Invoke("Fatal network error. Network services fail to shut down.");
+                    _reconnecting = false;
+                    _disconnectCalled = true;
+                    _tokenSource.Cancel();
+                    return;
+                }
 
-                 OnStateChanged?.Invoke(WebSocketState.Connecting, WebSocketState.Aborted);
+                Log("Disposing of current websocket.");
+                _ws.Dispose();
 
-                 _tokenSource = new CancellationTokenSource();
+                OnStateChanged?.Invoke(WebSocketState.Connecting, WebSocketState.Aborted);
 
-                 var connected = false;
-                 while (!_disconnectCalled && !_disposedValue && !connected && !_tokenSource.IsCancellationRequested)
-                 {
-                     try
-                     {
-                         Log("Creating new websocket.");
-                         InitializeClient();
-                         if (!_monitorRunning)
-                         {
-                             Log("Starting monitor.");
-                             StartMonitor();
-                         }
+                _tokenSource = new CancellationTokenSource();
 
-                         Log("Attempting connect.");
-                         connected = _ws.ConnectAsync(new Uri(Url), _tokenSource.Token).Wait(15000);
-                         Log($"Connect result: {connected}");
-                     }
-                     catch (Exception ex)
-                     {
-                         Log($"Reconnect threw an error: {ex.Message}.");
-                         Log("Disposing of current websocket.");
-                         _ws.Dispose();
-                         Log("Processing reconnect strategy.");
-                         await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval()).ConfigureAwait(false);
-                         _options.MyReconnectStrategy.ProcessValues();
-                         if (_options.MyReconnectStrategy.AreAttemptsComplete())
-                         {
-                             Log("Reconnect strategy has reached max connection attempts, going to fatality.");
-                             // exit everything as dead...
-                             OnFatality?.Invoke("Fatal network error. Max reconnect attempts reached.");
-                             _reconnectNeeded = false;
-                             _reconnecting = false;
-                             _disconnectCalled = true;
-                             _tokenSource.Cancel();
-                             return;
-                         }
-                     }
-                 }
+                var connected = false;
+                while (!_disconnectCalled && !_disposedValue && !connected && !_tokenSource.IsCancellationRequested)
+                    try
+                    {
+                        Log("Creating new websocket.");
+                        InitializeClient();
+                        if (!_monitorRunning)
+                        {
+                            Log("Starting monitor.");
+                            StartMonitor();
+                        }
 
-                 if (connected)
-                 {
-                     Log("Reconnect success, restarting tasks.");
-                     _reconnectNeeded = false;
-                     _reconnecting = false;
-                     if (!_monitorRunning)
-                     {
-                         StartMonitor();
-                     }
+                        Log("Attempting connect.");
+                        connected = _ws.ConnectAsync(new Uri(Url), _tokenSource.Token).Wait(15000);
+                        Log($"Connect result: {connected}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"Reconnect threw an error: {ex.Message}.");
+                        Log("Disposing of current websocket.");
+                        _ws.Dispose();
+                        Log("Processing reconnect strategy.");
+                        await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval()).ConfigureAwait(false);
+                        _options.MyReconnectStrategy.ProcessValues();
+                        if (_options.MyReconnectStrategy.AreAttemptsComplete())
+                        {
+                            Log("Reconnect strategy has reached max connection attempts, going to fatality.");
+                            // exit everything as dead...
+                            OnFatality?.Invoke("Fatal network error. Max reconnect attempts reached.");
+                            _reconnectNeeded = false;
+                            _reconnecting = false;
+                            _disconnectCalled = true;
+                            _tokenSource.Cancel();
+                            return;
+                        }
+                    }
 
-                     if (!_listenerRunning)
-                     {
-                         StartListener();
-                     }
+                if (connected)
+                {
+                    Log("Reconnect success, restarting tasks.");
+                    _reconnectNeeded = false;
+                    _reconnecting = false;
+                    if (!_monitorRunning) StartMonitor();
 
-                     if (!_senderRunning)
-                     {
-                         StartSender();
-                     }
-                 }
-                 else
-                 {
-                     Log("Reconnect failed.");
-                 }
-             });
+                    if (!_listenerRunning) StartListener();
+
+                    if (!_senderRunning) StartSender();
+                }
+                else
+                {
+                    Log("Reconnect failed.");
+                }
+            });
         }
 
         private void StartListener()
@@ -536,7 +521,8 @@ namespace PureWebSockets
                         if (res.MessageType == WebSocketMessageType.Close)
                         {
                             Log("Server requested close.");
-                            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "SERVER REQUESTED CLOSE", _tokenSource.Token);
+                            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "SERVER REQUESTED CLOSE",
+                                _tokenSource.Token);
                             _disconnectCalled = true;
                             return Task.CompletedTask;
                         }
@@ -549,11 +535,14 @@ namespace PureWebSockets
                                 message += Encoding.UTF8.GetString(buffer).TrimEnd('\0');
                                 goto READ;
                             }
+
                             message += Encoding.UTF8.GetString(buffer).TrimEnd('\0');
 
                             // support ping/pong if initiated by the server (see RFC 6455)
                             if (message.Trim() == "ping")
+                            {
                                 _ = Send("pong");
+                            }
                             else
                             {
                                 Log($"Message fully received: {message}");
@@ -586,6 +575,7 @@ namespace PureWebSockets
                     Log($"Listener threw exception: {ex.Message}.");
                     OnError?.Invoke(ex);
                 }
+
                 _listenerRunning = false;
                 Log("Listener exiting");
                 return Task.CompletedTask;
@@ -611,11 +601,13 @@ namespace PureWebSockets
                                 Log($"Message expired skipping: {msg.Key} {msg.Value}.");
                                 continue;
                             }
+
                             var buffer = Encoding.UTF8.GetBytes(msg.Value);
                             try
                             {
                                 Log($"Sending message: {msg.Key} {msg.Value}.");
-                                await _ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, _tokenSource.Token).ConfigureAwait(false);
+                                await _ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true,
+                                    _tokenSource.Token).ConfigureAwait(false);
                             }
                             catch (Exception ex)
                             {
@@ -627,6 +619,7 @@ namespace PureWebSockets
                                 break;
                             }
                         }
+
                         // limit to N ms per iteration
                         Thread.Sleep(_options.SendDelay);
                     }
@@ -637,6 +630,7 @@ namespace PureWebSockets
                     OnSendFailed?.Invoke("", ex);
                     OnError?.Invoke(ex);
                 }
+
                 _senderRunning = false;
                 Log("Exiting sender.");
                 return Task.CompletedTask;
@@ -649,13 +643,28 @@ namespace PureWebSockets
             {
                 Log("Disconnect called, closing websocket.");
                 _disconnectCalled = true;
-                _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "NORMAL SHUTDOWN", _tokenSource.Token).Wait(_options.DisconnectWait);
+                _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "NORMAL SHUTDOWN", _tokenSource.Token)
+                    .Wait(_options.DisconnectWait);
             }
             catch (Exception ex)
             {
                 Log($"Disconnect threw exception: {ex.Message}.");
                 // ignored
             }
+        }
+
+        internal void Log(string message, [CallerMemberName] string memberName = "")
+        {
+            if (_options.DebugMode)
+                Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
+        }
+
+        internal void LogData(string message, byte[] data, [CallerMemberName] string memberName = "")
+        {
+            if (_options.DebugMode)
+                Task.Run(() =>
+                    _options.DebugOutput.WriteLine(
+                        $"{DateTime.Now:O} PureWebSocket.{memberName}: {message}, data: {BitConverter.ToString(data)}"));
         }
 
         #region IDisposable Support
@@ -676,12 +685,10 @@ namespace PureWebSockets
                         {
                             i++;
                             Task.Delay(1000).Wait();
-                            if (i > 25)
-                            {
-                                break;
-                            }
+                            if (i > 25) break;
                         }
                     }
+
                     Disconnect();
                     _tokenSource.Cancel();
                     Thread.Sleep(500);
@@ -709,16 +716,5 @@ namespace PureWebSockets
         }
 
         #endregion
-
-        internal void Log(string message, [CallerMemberName] string memberName = "")
-        {
-            if (_options.DebugMode)
-                Task.Run(() => Console.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}"));
-        }
-        internal void LogData(string message, byte[] data, [CallerMemberName] string memberName = "")
-        {
-            if (_options.DebugMode)
-                Task.Run(() => _options.DebugOutput.WriteLine($"{DateTime.Now:O} PureWebSocket.{memberName}: {message}, data: {BitConverter.ToString(data)}"));
-        }
     }
 }
