@@ -106,9 +106,15 @@
         internal void ProcessValues()
         {
             _attemptsMade++;
-            if (_minReconnectInterval < _maxReconnectInterval) _minReconnectInterval += _reconnectStepInterval;
+            if (_minReconnectInterval < _maxReconnectInterval)
+            {
+                _minReconnectInterval += _reconnectStepInterval;
+            }
 
-            if (_minReconnectInterval > _maxReconnectInterval) _minReconnectInterval = _maxReconnectInterval;
+            if (_minReconnectInterval > _maxReconnectInterval)
+            {
+                _minReconnectInterval = _maxReconnectInterval;
+            }
         }
 
         public int GetReconnectInterval()

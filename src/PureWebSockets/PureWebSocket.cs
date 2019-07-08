@@ -90,9 +90,11 @@ namespace PureWebSockets
             try
             {
                 if (_options.IgnoreCertErrors)
+                {
                     //NOTE: this will not work and a workaround will be available in netstandard 2.1
                     ServicePointManager.ServerCertificateValidationCallback +=
                         (sender, certificate, chain, errors) => true;
+                }
             }
             catch (Exception ex)
             {
@@ -117,7 +119,9 @@ namespace PureWebSockets
             }
 
             if (_options.SubProtocols != null)
+            {
                 foreach (var protocol in _options.SubProtocols)
+                {
                     try
                     {
                         _ws.Options.AddSubProtocol(protocol);
@@ -127,10 +131,14 @@ namespace PureWebSockets
                         Log("Invalid or unsupported sub protocol, value: " + protocol + ", exception: " + ex.Message,
                             nameof(_options.SubProtocols));
                     }
+                }
+            }
 
             // optionally add request header e.g. X-Key, testapikey123
             if (_options.Headers != null)
+            {
                 foreach (var h in _options.Headers)
+                {
                     try
                     {
                         _ws.Options.SetRequestHeader(h.Item1, h.Item2);
@@ -140,6 +148,8 @@ namespace PureWebSockets
                         Log("Invalid or unsupported header, value: " + h + ", exception: " + ex.Message,
                             nameof(_options.Headers));
                     }
+                }
+            }
         }
 
         public bool Connect()
@@ -189,7 +199,9 @@ namespace PureWebSockets
                     var st = DateTime.UtcNow;
 
                     while (_ws.State != WebSocketState.Open && (DateTime.UtcNow - st).TotalSeconds < 16)
+                    {
                         await Task.Delay(1).ConfigureAwait(false);
+                    }
                 });
 
                 Log($"Connect result: {_ws.State == WebSocketState.Open}, State {_ws.State}");
@@ -338,6 +350,7 @@ namespace PureWebSockets
                         }
 
                         if (_reconnecting)
+                        {
                             // if we are reconnecting don't be so quick to fire off a state change
                             if (_options.MyReconnectStrategy != null)
                             {
@@ -345,16 +358,19 @@ namespace PureWebSockets
                                     .ConfigureAwait(false);
                                 if (_reconnecting)
                                 {
-                                    await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval());
+                                    await Task.Delay(_options.MyReconnectStrategy.GetReconnectInterval()).ConfigureAwait(false);
                                     // this gives us a max of N seconds to do a reconnect
                                     if (!_reconnecting)
+                                    {
                                         return;
+                                    }
                                 }
                                 else
                                 {
                                     return;
                                 }
                             }
+                        }
 
                         // don't fire if we just came off of an abort (reconnect)
                         if (lastState == WebSocketState.Aborted &&
@@ -455,6 +471,7 @@ namespace PureWebSockets
 
                 var connected = false;
                 while (!_disconnectCalled && !_disposedValue && !connected && !_tokenSource.IsCancellationRequested)
+                {
                     try
                     {
                         Log("Creating new websocket.");
@@ -489,17 +506,27 @@ namespace PureWebSockets
                             return;
                         }
                     }
+                }
 
                 if (connected)
                 {
                     Log("Reconnect success, restarting tasks.");
                     _reconnectNeeded = false;
                     _reconnecting = false;
-                    if (!_monitorRunning) StartMonitor();
+                    if (!_monitorRunning)
+                    {
+                        StartMonitor();
+                    }
 
-                    if (!_listenerRunning) StartListener();
+                    if (!_listenerRunning)
+                    {
+                        StartListener();
+                    }
 
-                    if (!_senderRunning) StartSender();
+                    if (!_senderRunning)
+                    {
+                        StartSender();
+                    }
                 }
                 else
                 {
@@ -710,7 +737,10 @@ namespace PureWebSockets
                     {
                         i++;
                         Task.Delay(1000).Wait();
-                        if (i > 25) break;
+                        if (i > 25)
+                        {
+                            break;
+                        }
                     }
 
                     Disconnect();
