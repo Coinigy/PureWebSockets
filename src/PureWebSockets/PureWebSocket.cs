@@ -106,8 +106,7 @@ namespace PureWebSockets
             if (_options.ClientCertificates != null && _options.ClientCertificates.Count > 0)
                 _ws.Options.ClientCertificates = _options.ClientCertificates;
 
-            if (_options.Proxy != null)
-                _ws.Options.Proxy = _options.Proxy;
+            if (_options.Proxy != null) _ws.Options.Proxy = _options.Proxy;
 
             if (_options.SubProtocols != null)
                 foreach (var protocol in _options.SubProtocols)
@@ -276,7 +275,7 @@ namespace PureWebSockets
                 case EncodingTypes.Default:
                     return Send(Encoding.Default.GetString(data));
                 default:
-                    return Send(Encoding.Default.GetString(data));
+                    throw new ArgumentOutOfRangeException(nameof(encodingType));
             }
         }
 
@@ -304,7 +303,7 @@ namespace PureWebSockets
                 case EncodingTypes.Default:
                     return SendAsync(Encoding.Default.GetString(data));
                 default:
-                    return SendAsync(Encoding.Default.GetString(data));
+                    throw new ArgumentOutOfRangeException(nameof(encodingType));
             }
         }
 
@@ -515,8 +514,7 @@ namespace PureWebSockets
                             break;
                         }
 
-                        if (res == null)
-                            goto READ;
+                        if (res == null) goto READ;
 
                         if (res.MessageType == WebSocketMessageType.Close)
                         {
