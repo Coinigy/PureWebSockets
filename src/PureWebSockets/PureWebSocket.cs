@@ -56,6 +56,11 @@ namespace PureWebSockets
         }
 
         private string Url { get; }
+        
+        /// <summary>
+        /// The Client Web Socket Instance
+        /// </summary>
+        public ClientWebSocket Ws { get => _ws; }        
 
         /// <summary>
         ///     The current state of the connection.
