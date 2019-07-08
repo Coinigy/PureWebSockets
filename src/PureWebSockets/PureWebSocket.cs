@@ -101,12 +101,20 @@ namespace PureWebSockets
                 _options.IgnoreCertErrors = false;
             }
 
-            if (_options.Cookies != null && _options.Cookies.Count > 0) _ws.Options.Cookies = _options.Cookies;
+            if (_options.Cookies != null && _options.Cookies.Count > 0)
+            {
+                _ws.Options.Cookies = _options.Cookies;
+            }
 
             if (_options.ClientCertificates != null && _options.ClientCertificates.Count > 0)
+            {
                 _ws.Options.ClientCertificates = _options.ClientCertificates;
+            }
 
-            if (_options.Proxy != null) _ws.Options.Proxy = _options.Proxy;
+            if (_options.Proxy != null)
+            {
+                _ws.Options.Proxy = _options.Proxy;
+            }
 
             if (_options.SubProtocols != null)
                 foreach (var protocol in _options.SubProtocols)
@@ -147,7 +155,10 @@ namespace PureWebSockets
 
                 Task.Run(async () =>
                 {
-                    while (_ws.State != WebSocketState.Open) await Task.Delay(1);
+                    while (_ws.State != WebSocketState.Open)
+                    {
+                        await Task.Delay(1).ConfigureAwait(false);
+                    }
                 }).Wait(15000);
 
                 Log($"Connect result: {_ws.State == WebSocketState.Open}, State {_ws.State}");
@@ -322,7 +333,7 @@ namespace PureWebSockets
                     {
                         if (lastState == State)
                         {
-                            await Task.Delay(200);
+                            await Task.Delay(200).ConfigureAwait(false);
                             continue;
                         }
 
@@ -348,9 +359,14 @@ namespace PureWebSockets
                         // don't fire if we just came off of an abort (reconnect)
                         if (lastState == WebSocketState.Aborted &&
                             (State == WebSocketState.Connecting || State == WebSocketState.Open))
+                        {
                             break;
+                        }
 
-                        if (_autoReconnect && _reconnectNeeded && State == WebSocketState.Aborted) break;
+                        if (_autoReconnect && _reconnectNeeded && State == WebSocketState.Aborted)
+                        {
+                            break;
+                        }
 
                         // check again since this can change before the first check
                         if (lastState == State)
@@ -361,12 +377,17 @@ namespace PureWebSockets
 
                         if (_autoReconnect && !_options.MyReconnectStrategy.AreAttemptsComplete() &&
                             (State == WebSocketState.Closed || State == WebSocketState.Aborted))
+                        {
                             break;
+                        }
 
                         Log($"State changed from {lastState} to {State}.");
                         OnStateChanged?.Invoke(State, lastState);
 
-                        if (State == WebSocketState.Open) OnOpened?.Invoke();
+                        if (State == WebSocketState.Open)
+                        {
+                            OnOpened?.Invoke();
+                        }
 
                         if ((State == WebSocketState.Closed || State == WebSocketState.Aborted) && !_reconnecting)
                         {
@@ -383,7 +404,9 @@ namespace PureWebSockets
 
                             OnClosed?.Invoke(_ws.CloseStatus ?? WebSocketCloseStatus.Empty);
                             if (_ws.CloseStatus != null && _ws.CloseStatus != WebSocketCloseStatus.NormalClosure)
+                            {
                                 OnError?.Invoke(new Exception(_ws.CloseStatus + " " + _ws.CloseStatusDescription));
+                            }
                         }
 
                         lastState = State;
@@ -397,7 +420,10 @@ namespace PureWebSockets
 
                 _monitorRunning = false;
                 Log("Exiting monitor.");
-                if (_autoReconnect && _reconnectNeeded && !_reconnecting && !_disconnectCalled) DoReconnect();
+                if (_autoReconnect && _reconnectNeeded && !_reconnecting && !_disconnectCalled)
+                {
+                    DoReconnect();
+                }
             });
         }
 
@@ -514,7 +540,10 @@ namespace PureWebSockets
                             break;
                         }
 
-                        if (res == null) goto READ;
+                        if (res == null)
+                        {
+                            goto READ;
+                        }
 
                         if (res.MessageType == WebSocketMessageType.Close)
                         {
