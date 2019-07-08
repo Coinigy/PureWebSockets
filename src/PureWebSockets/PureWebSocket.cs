@@ -705,15 +705,12 @@ namespace PureWebSockets
                 if (disposing)
                 {
                     // dispose managed state (managed objects).
-                    if (_sendQueue.Count > 0 && _senderRunning)
+                    var i = 0;
+                    while (_sendQueue.Count > 0 && _senderRunning)
                     {
-                        var i = 0;
-                        while (_sendQueue.Count > 0 && _senderRunning)
-                        {
-                            i++;
-                            Task.Delay(1000).Wait();
-                            if (i > 25) break;
-                        }
+                        i++;
+                        Task.Delay(1000).Wait();
+                        if (i > 25) break;
                     }
 
                     Disconnect();
