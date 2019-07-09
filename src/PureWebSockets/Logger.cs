@@ -1,4 +1,11 @@
-﻿using System;
+/*
+ * Author: ByronP
+ * Date: 07/08/2019
+ * Mod: 07/08/2019
+ * Coinigy Inc. Coinigy.com
+ */
+
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
