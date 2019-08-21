@@ -13,3 +13,7 @@
 * Example included in project
   
   Provided by: 2018 -2019 Coinigy Inc. Coinigy.com
+
+## V3 Breaking Changes
+* Events now have a sender object which is the instance that reaised the event.
+* (non breaking but useful) An addition construstor has been added with an instance name argument which makes it easier to identify an instance when using multiple connections. This links to the new property InstanceName.
