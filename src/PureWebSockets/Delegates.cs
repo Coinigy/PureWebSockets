@@ -15,7 +15,7 @@ namespace PureWebSockets
 
     public delegate void Error(object sender, Exception ex);
 
-    public delegate void SendFailed(object sender, string data, Exception ex);
+    public delegate void SendFailed(object sender, byte[] data, Exception ex);
 
     public delegate void Fatality(object sender, string reason);
 }
