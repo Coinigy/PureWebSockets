@@ -25,8 +25,8 @@ namespace PureWebSockets
         private readonly Logger _logger;
         private readonly PureWebSocketOptions _options;
 
-        private readonly BlockingCollection<KeyValuePair<DateTime, string>> _sendQueue =
-            new BlockingCollection<KeyValuePair<DateTime, string>>();
+        private readonly BlockingCollection<KeyValuePair<DateTime, RequestMessage>> _sendQueue =
+            new BlockingCollection<KeyValuePair<DateTime, RequestMessage>>();
 
         private bool _disconnectCalled;
         private bool _listenerRunning;
@@ -246,7 +246,13 @@ namespace PureWebSockets
             }
         }
 
-        public bool Send(string data)
+        /// <summary>
+        /// Defaults to UTF8 encoding
+        /// </summary>
+        /// <param name="data"></param>
+        /// <param name="encoding"></param>
+        /// <returns></returns>
+        public bool Send(string data, Encoding encoding = null)
         {
             try
             {
@@ -262,7 +268,8 @@ namespace PureWebSockets
                 Task.Run(() =>
                 {
                     _logger.Log($"Adding item to send queue: Data {data}");
-                    _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
+                    var message = new RequestMessage { Data = (encoding ?? Encoding.UTF8).GetBytes(data), Type = MessageType.TEXT };
+                    _sendQueue.Add(new KeyValuePair<DateTime, RequestMessage>(DateTime.UtcNow, message));
                 }).Wait(100, _tokenSource.Token);
 
                 return true;
@@ -270,6 +277,34 @@ namespace PureWebSockets
             catch (Exception ex)
             {
                 _logger.Log($"Send threw exception: {ex.Message}.");
+                OnError?.Invoke(this, ex);
+                throw;
+            }
+        }
+
+        public async Task<bool> SendRawAsync(byte[] data)
+        {
+            try
+            {
+                if (State != WebSocketState.Open && !_reconnecting || SendQueueLength >= _options.SendQueueLimit || _disconnectCalled)
+                {
+                    await _logger.LogAsync(SendQueueLength >= _options.SendQueueLimit
+                        ? $"Could not add item to send queue: queue limit reached, Data {data}"
+                        : $"Could not add item to send queue: State {State}, Queue Count {SendQueueLength}, Data {data}").ConfigureAwait(false);
+                    return false;
+                }
+
+                await Task.Run(() =>
+                    {
+                        _ = _logger.LogAsync($"Adding item to send queue: Daa {data}").ConfigureAwait(false);
+                        _sendQueue.Add(new KeyValuePair<DateTime, RequestMessage>(DateTime.UtcNow, new RequestMessage{ Data = data, Type = MessageType.BINARY }));
+                    }).ConfigureAwait(false);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _logger.LogAsync($"Send threw exception: {ex.Message}.").ConfigureAwait(false);
                 OnError?.Invoke(this, ex);
                 throw;
             }
@@ -291,7 +326,8 @@ namespace PureWebSockets
                 await Task.Run(() =>
                 {
                     _ = _logger.LogAsync($"Adding item to send queue: Data {data}").ConfigureAwait(false);
-                    _sendQueue.Add(new KeyValuePair<DateTime, string>(DateTime.UtcNow, data));
+                    var message = new RequestMessage { Data = Encoding.UTF8.GetBytes(data), Type = MessageType.TEXT };
+                    _sendQueue.Add(new KeyValuePair<DateTime, RequestMessage>(DateTime.UtcNow, message));
                 }).ConfigureAwait(false);
 
                 return true;
@@ -314,30 +350,25 @@ namespace PureWebSockets
             switch (encodingType)
             {
                 case EncodingTypes.UTF7:
-                    return Send(Encoding.UTF7.GetString(data));
+                    return Send(Encoding.UTF7.GetString(data), Encoding.UTF7);
                 case EncodingTypes.UTF8:
-                    return Send(Encoding.UTF8.GetString(data));
+                    return Send(Encoding.UTF8.GetString(data), Encoding.UTF8);
                 case EncodingTypes.UTF32:
-                    return Send(Encoding.UTF32.GetString(data));
+                    return Send(Encoding.UTF32.GetString(data), Encoding.UTF32);
                 case EncodingTypes.ASCII:
-                    return Send(Encoding.ASCII.GetString(data));
+                    return Send(Encoding.ASCII.GetString(data), Encoding.ASCII);
                 case EncodingTypes.Unicode:
-                    return Send(Encoding.Unicode.GetString(data));
+                    return Send(Encoding.Unicode.GetString(data), Encoding.Unicode);
                 case EncodingTypes.BigEndianUnicode:
-                    return Send(Encoding.BigEndianUnicode.GetString(data));
+                    return Send(Encoding.BigEndianUnicode.GetString(data), Encoding.BigEndianUnicode);
                 case EncodingTypes.Default:
-                    return Send(Encoding.Default.GetString(data));
+                    return Send(Encoding.Default.GetString(data), Encoding.Default);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(encodingType));
             }
         }
 
-        public Task<bool> SendAsync(byte[] data)
-        {
-            return SendAsync(data, EncodingTypes.UTF8);
-        }
-
-        public Task<bool> SendAsync(byte[] data, EncodingTypes encodingType)
+        public Task<bool> SendAsync(byte[] data, EncodingTypes encodingType = EncodingTypes.UTF8)
         {
             switch (encodingType)
             {
@@ -686,18 +717,19 @@ namespace PureWebSockets
                                 continue;
                             }
 
-                            var buffer = Encoding.UTF8.GetBytes(msg.Value);
+                            var buffer = msg.Value.Data;
                             try
                             {
                                 _logger.Log($"Sending message: {msg.Key} {msg.Value}.");
-                                await _ws.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true,
+                                var msgType = msg.Value.Type == MessageType.TEXT ? WebSocketMessageType.Text : WebSocketMessageType.Binary;
+                                await _ws.SendAsync(new ArraySegment<byte>(buffer), msgType, true,
                                     _tokenSource.Token).ConfigureAwait(false);
                             }
                             catch (Exception ex)
                             {
                                 _logger.Log($"Sender threw sending exception: {ex.Message}.");
                                 // Most likely socket error
-                                OnSendFailed?.Invoke(this, msg.Value, ex);
+                                OnSendFailed?.Invoke(this, msg.Value.Data, ex);
                                 _reconnectNeeded = true;
                                 _ws.Abort();
                                 break;
@@ -711,7 +743,7 @@ namespace PureWebSockets
                 catch (Exception ex)
                 {
                     _logger.Log($"Sender threw exception: {ex.Message}.");
-                    OnSendFailed?.Invoke(this, "", ex);
+                    OnSendFailed?.Invoke(this, Encoding.UTF8.GetBytes(string.Empty), ex);
                     OnError?.Invoke(this, ex);
                 }
 

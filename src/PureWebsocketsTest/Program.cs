@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using PureWebSockets;
@@ -39,7 +40,7 @@ namespace PureWebsocketsTest
             goto RESTART;
         }
 
-        private static void Ws_OnSendFailed(object sender, string data, Exception ex)
+        private static void Ws_OnSendFailed(object sender, byte[] data, Exception ex)
         {
             OutputConsole.WriteLine($"{DateTime.Now} {((PureWebSocket)sender).InstanceName} Send Failed: {ex.Message}\r\n", ConsoleColor.Red);
         }
@@ -79,7 +80,7 @@ namespace PureWebsocketsTest
             }
             else
             {
-                Ws_OnSendFailed(_ws, "", new Exception("Send Returned False"));
+                Ws_OnSendFailed(_ws, Encoding.UTF8.GetBytes(string.Empty), new Exception("Send Returned False"));
             }
         }
     }
